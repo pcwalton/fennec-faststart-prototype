@@ -43,6 +43,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.DisplayMetrics;
@@ -51,6 +52,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -72,6 +74,7 @@ class SurfaceTestView extends SurfaceView implements SurfaceHolder.Callback {
 
         mBitmap = BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.star);
         getHolder().addCallback(this);
+
         Log.e("FennecFastStart", "SurfaceTestView constructor");
     }
 
@@ -81,8 +84,6 @@ class SurfaceTestView extends SurfaceView implements SurfaceHolder.Callback {
 
         SurfaceHolder holder = getHolder();
         holder.setFixedSize(mRealWidth, mRealHeight);
-
-        holder.getSurface().setAlpha(0.5f);
 
         Canvas canvas = holder.lockCanvas();
         canvas.drawRGB(0, 0, 255);
@@ -131,6 +132,11 @@ class CircleLayout extends ViewGroup {
         DisplayMetrics metrics = new DisplayMetrics();
         ((Activity)getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mRealSize = (int)(Math.round(SurfaceTestView.SIZE / metrics.density));
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        getParent().requestTransparentRegion(this);
     }
 
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -182,7 +188,7 @@ public class SurfaceTestController {
     private void build() {
 
         mLayout = new CircleLayout(mActivity);
-        mSubviews = new SurfaceTestView[8];
+        mSubviews = new SurfaceTestView[5];
         for (int i = 0; i < mSubviews.length; i++) {
             SurfaceTestView subview = new SurfaceTestView(mActivity);
             mLayout.addView(subview);
