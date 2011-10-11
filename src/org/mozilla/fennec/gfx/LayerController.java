@@ -35,18 +35,18 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennecfaststart.GeckoView;
-import org.mozilla.fennecfaststart.ImageLayer;
-import org.mozilla.fennecfaststart.Layer;
-import org.mozilla.fennecfaststart.PLayer;
-import org.mozilla.fennecfaststart.PLayers;
-import org.mozilla.fennecfaststart.PLayers.Edit;
-import org.mozilla.fennecfaststart.PLayers.EditReply;
-import org.mozilla.fennecfaststart.PLayers.OpCreateImageLayer;
-import org.mozilla.fennecfaststart.PLayers.OpPaintImage;
-import org.mozilla.fennecfaststart.PLayers.SharedImage;
+import org.mozilla.fennec.gfx.GeckoView;
+import org.mozilla.fennec.gfx.ImageLayer;
+import org.mozilla.fennec.gfx.Layer;
+import org.mozilla.fennec.ipdl.PLayer;
+import org.mozilla.fennec.ipdl.PLayers;
+import org.mozilla.fennec.ipdl.PLayers.Edit;
+import org.mozilla.fennec.ipdl.PLayers.EditReply;
+import org.mozilla.fennec.ipdl.PLayers.OpCreateImageLayer;
+import org.mozilla.fennec.ipdl.PLayers.OpPaintImage;
+import org.mozilla.fennec.ipdl.PLayers.SharedImage;
 import android.app.Activity;
 import android.util.Log;
 import java.util.HashMap;

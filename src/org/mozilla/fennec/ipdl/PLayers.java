@@ -35,9 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec.ipdl;
 
-import org.mozilla.fennecfaststart.PLayer;
+import org.mozilla.fennec.ipdl.PLayer;
 import android.graphics.Bitmap;
 import java.nio.ByteBuffer;
 
@@ -61,12 +61,12 @@ public abstract class PLayers {
         public int width, height, format;
 
         // Shmem uses Cairo image formats internally.
-        static final int FORMAT_INVALID = -1;
-        static final int FORMAT_ARGB32 = 0;
-        static final int FORMAT_RGB24 = 1;
-        static final int FORMAT_A8 = 2;
-        static final int FORMAT_A1 = 3;
-        static final int FORMAT_RGB16_565 = 4;
+        public static final int FORMAT_INVALID = -1;
+        public static final int FORMAT_ARGB32 = 0;
+        public static final int FORMAT_RGB24 = 1;
+        public static final int FORMAT_A8 = 2;
+        public static final int FORMAT_A1 = 3;
+        public static final int FORMAT_RGB16_565 = 4;
     }
 
     public static abstract class Edit {}
@@ -78,15 +78,15 @@ public abstract class PLayers {
     }
 
     public static class CommonLayerAttributes {
-        nsIntRegion visibleRegion;
-        gfx3DMatrix transform;
-        int contentFlags;
-        float opacity;
-        boolean useClipRect;
-        nsIntRect clipRect;
-        boolean useTileSourceRect;
-        nsIntRect tileSourceRect;
-        boolean isFixedPosition;
+        public nsIntRegion visibleRegion;
+        public gfx3DMatrix transform;
+        public int contentFlags;
+        public float opacity;
+        public boolean useClipRect;
+        public nsIntRect clipRect;
+        public boolean useTileSourceRect;
+        public nsIntRect tileSourceRect;
+        public boolean isFixedPosition;
     }
 
     public static class LayerAttributes {
@@ -107,8 +107,8 @@ public abstract class PLayers {
 
     // Paint (buffer update)
     public static class OpPaintImage extends Edit {
-        PLayer layer;
-        SharedImage newFrontBuffer;
+        public PLayer layer;
+        public SharedImage newFrontBuffer;
     }
 
     // Replies to operations

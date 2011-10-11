@@ -35,12 +35,24 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennecfaststart.PLayer;
-import javax.microedition.khronos.opengles.GL10;
+import org.mozilla.fennec.gfx.GeckoRenderer;
+import org.mozilla.fennec.gfx.LayerController;
+import android.app.Activity;
+import android.opengl.GLSurfaceView;
 
-public abstract class Layer {
-    public abstract void draw(GL10 gl);
+/*
+ * A pannable, zoomable Gecko rendering view. The actual layer manager is in GeckoRenderer.
+ */
+public class GeckoView extends GLSurfaceView {
+    private Activity mActivity;
+
+    public GeckoView(Activity activity, LayerController layerController) {
+        super(activity);
+        mActivity = activity;
+
+        setRenderer(new GeckoRenderer(layerController));
+    }
 }
 

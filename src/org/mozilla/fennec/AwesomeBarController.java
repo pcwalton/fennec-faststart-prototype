@@ -35,58 +35,40 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec;
 
-import org.mozilla.fennecfaststart.GeckoView;
-import org.mozilla.fennecfaststart.LayerController;
-import org.mozilla.fennecfaststart.StaticImageLayerClient;
 import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 
-public class MainUIController {
-    private Activity mActivity;
-    //private SurfaceTestController mController;
-    private View outerView;
+public class AwesomeBarController {
+    private MainUIController mainUIController;
+    private View awesomeBar;
 
-    public MainUIController(Activity inActivity) {
-        mActivity = inActivity;
+    public AwesomeBarController(MainUIController inMainUIController) {
+        mainUIController = inMainUIController;
         build();
     }
 
-    public Activity getActivity() { return mActivity; }
-
-    /** Constructs the UI. */
+    /** Constructs the Awesome Bar widgets. */
     private void build() {
-        AwesomeBarController awesomeBarController =
-            new AwesomeBarController(this);
+        LinearLayout layout = new LinearLayout(mainUIController.getActivity());
+        layout.setOrientation(LinearLayout.HORIZONTAL);
 
-        // Content
-        // GeckoSurfaceView contentView = new GeckoSurfaceView(mActivity);
-        LayerController layerController = new LayerController(mActivity);
-        View contentView = layerController.getView();
-        LinearLayout.LayoutParams contentViewLayout =
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                                          ViewGroup.LayoutParams.FILL_PARENT);
-        contentViewLayout.weight = 1.0f;
-        contentView.setLayoutParams(contentViewLayout);
+        EditText textBox = new EditText(mainUIController.getActivity());
+        LinearLayout.LayoutParams textBoxLayoutParams =
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                          ViewGroup.LayoutParams.WRAP_CONTENT);
+        textBoxLayoutParams.weight = 1.0f;
+        textBox.setLayoutParams(textBoxLayoutParams);
+        textBox.setImeOptions(0x2);  // "Go"
+        layout.addView(textBox);
 
-        StaticImageLayerClient staticImageLayerClient =
-            new StaticImageLayerClient(mActivity, layerController);
-        staticImageLayerClient.init();
-
-        LinearLayout outerLayout = new LinearLayout(mActivity);
-        outerLayout.setOrientation(LinearLayout.VERTICAL);
-        outerLayout.addView(awesomeBarController.getAwesomeBar());
-        outerLayout.addView(contentView);
-
-        outerView = outerLayout;
+        awesomeBar = layout;
     }
 
-    public View getOuterView() { return outerView; }
-
-    public void start() { /*mController.start();*/ }
+    public View getAwesomeBar() { return awesomeBar; }
 }
 

@@ -35,16 +35,17 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec;
 
-import org.mozilla.fennecfaststart.PLayer;
-import org.mozilla.fennecfaststart.PLayers;
-import org.mozilla.fennecfaststart.PLayers.Edit;
-import org.mozilla.fennecfaststart.PLayers.OpCreateImageLayer;
-import org.mozilla.fennecfaststart.PLayers.OpPaintImage;
-import org.mozilla.fennecfaststart.PLayers.OpSetRoot;
-import org.mozilla.fennecfaststart.PLayers.SharedImageShmem;
-import org.mozilla.fennecfaststart.PLayers.SurfaceDescriptor;
+import org.mozilla.fennec.ipdl.PLayer;
+import org.mozilla.fennec.ipdl.PLayers;
+import org.mozilla.fennec.ipdl.PLayers.Edit;
+import org.mozilla.fennec.ipdl.PLayers.OpCreateImageLayer;
+import org.mozilla.fennec.ipdl.PLayers.OpPaintImage;
+import org.mozilla.fennec.ipdl.PLayers.OpSetRoot;
+import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
+import org.mozilla.fennec.ipdl.PLayers.SurfaceDescriptor;
+import org.mozilla.fennecfaststart.R;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

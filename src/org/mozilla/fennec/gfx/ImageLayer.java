@@ -35,12 +35,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennecfaststart.Layer;
-import org.mozilla.fennecfaststart.PLayers.SharedImage;
-import org.mozilla.fennecfaststart.PLayers.SharedImageShmem;
-import org.mozilla.fennecfaststart.PLayers.SurfaceDescriptor;
+import org.mozilla.fennec.gfx.Layer;
+import org.mozilla.fennec.ipdl.PLayers.SharedImage;
+import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
+import org.mozilla.fennec.ipdl.PLayers.SurfaceDescriptor;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -52,10 +52,14 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.opengles.GL10;
 
 public class ImageLayer extends Layer {
+    private final int TILE_SIZE = 256;
+
     private SharedImageShmem mShmem;
     private boolean mSurfaceDirty;
     private FloatBuffer mVertexBuffer, mTexCoordBuffer;
     private Activity mActivity;
+    private int[] mTextureIDs;
+    private int mTilesAcross, mTilesDown;
 
     final float[] VERTICES = {
         -1.0f, -1.0f, 0.0f,
@@ -92,36 +96,59 @@ public class ImageLayer extends Layer {
     public void draw(GL10 gl) {
         //Log.e("Fennec", "in ImageLayer::draw");
 
-        reloadTextureIfNecessary(gl);
-
-        gl.glLoadIdentity();
-        gl.glTranslatef(0.0f, 0.0f, -6.0f);
+        retileIfNecessary(gl);
 
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
-        gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
-        gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+
+        int k = 0;
+        for (int i = 0; i < mTilesDown; i++) {
+            for (int j = 0; j < mTilesAcross; j++) {
+                gl.glLoadIdentity();
+                gl.glTranslatef((float)j, (float)i, -6.0f);
+
+                if (k == 0 || k == 3) {
+                    gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureIDs[k]);
+                    gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
+                    gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
+                    gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+                }
+
+                k++;
+            }
+        }
+
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
     }
 
-    private void reloadTextureIfNecessary(GL10 gl) {
+    private void retileIfNecessary(GL10 gl) {
         if (!mSurfaceDirty || mShmem == null)
             return;
 
-        Log.e("Fennec", "Reloading texture, width=" + mShmem.width + ", height=" + mShmem.height +
-              ", format=" + mShmem.format);
+        mTilesAcross = (int)Math.ceil((double)mShmem.width / (double)TILE_SIZE);
+        mTilesDown = (int)Math.ceil((double)mShmem.height / (double)TILE_SIZE);
 
-        int[] textureIds = new int[1];
-        gl.glGenTextures(1, textureIds, 0);
+        Log.e("Fennec", "Retiling, width=" + mShmem.width + ", height=" + mShmem.height +
+              ", format=" + mShmem.format + ", tilesAcross=" + mTilesAcross);
 
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIds[0]);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+        mTextureIDs = new int[mTilesAcross * mTilesDown];
+        gl.glGenTextures(mTextureIDs.length, mTextureIDs, 0);
 
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, cairoFormatToGLInternalFormat(mShmem.format),
-                        mShmem.width, mShmem.height, 0, cairoFormatToGLFormat(mShmem.format),
-                        cairoFormatToGLType(mShmem.format), mShmem.buffer);
+        int k = 0;
+        for (int i = 0; i < mTilesDown; i++) {
+            for (int j = 0; j < mTilesAcross; j++) {
+                gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureIDs[k]);
+                gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,
+                                   GL10.GL_NEAREST);
+                gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,
+                                   GL10.GL_LINEAR);
+                gl.glTexSubImage2D(gl.GL_TEXTURE_2D, 0, j * TILE_SIZE, i * TILE_SIZE,
+                                   TILE_SIZE, TILE_SIZE, cairoFormatToGLFormat(mShmem.format),
+                                   cairoFormatToGLType(mShmem.format), mShmem.buffer);
+                Log.e("Fennec", "glTexSubImage2D() error == " + gl.glGetError());
+                k++;
+            }
+        }
 
         mSurfaceDirty = false;
     }

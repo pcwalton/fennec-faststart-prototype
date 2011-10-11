@@ -35,7 +35,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec.gfx;
 
-public abstract class PLayer {}
+import org.mozilla.fennec.ipdl.PLayer;
+import javax.microedition.khronos.opengles.GL10;
+
+public abstract class Layer {
+    public abstract void draw(GL10 gl);
+}
 

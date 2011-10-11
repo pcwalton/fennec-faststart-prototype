@@ -35,8 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennecfaststart;
+package org.mozilla.fennec;
 
+import org.mozilla.fennecfaststart.R;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;

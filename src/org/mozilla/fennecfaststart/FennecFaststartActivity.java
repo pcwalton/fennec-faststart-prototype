@@ -1,6 +1,6 @@
 package org.mozilla.fennecfaststart;
 
-import org.mozilla.fennecfaststart.MainUIController;
+import org.mozilla.fennec.MainUIController;
 import android.app.Activity;
 import android.os.Bundle;
 
