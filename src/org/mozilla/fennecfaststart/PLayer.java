@@ -37,56 +37,5 @@
 
 package org.mozilla.fennecfaststart;
 
-import org.mozilla.fennecfaststart.GeckoView;
-import org.mozilla.fennecfaststart.LayerController;
-import org.mozilla.fennecfaststart.StaticImageLayerClient;
-import android.app.Activity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-
-public class MainUIController {
-    private Activity mActivity;
-    //private SurfaceTestController mController;
-    private View outerView;
-
-    public MainUIController(Activity inActivity) {
-        mActivity = inActivity;
-        build();
-    }
-
-    public Activity getActivity() { return mActivity; }
-
-    /** Constructs the UI. */
-    private void build() {
-        AwesomeBarController awesomeBarController =
-            new AwesomeBarController(this);
-
-        // Content
-        // GeckoSurfaceView contentView = new GeckoSurfaceView(mActivity);
-        LayerController layerController = new LayerController(mActivity);
-        View contentView = layerController.getView();
-        LinearLayout.LayoutParams contentViewLayout =
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                                          ViewGroup.LayoutParams.FILL_PARENT);
-        contentViewLayout.weight = 1.0f;
-        contentView.setLayoutParams(contentViewLayout);
-
-        StaticImageLayerClient staticImageLayerClient =
-            new StaticImageLayerClient(mActivity, layerController);
-        staticImageLayerClient.init();
-
-        LinearLayout outerLayout = new LinearLayout(mActivity);
-        outerLayout.setOrientation(LinearLayout.VERTICAL);
-        outerLayout.addView(awesomeBarController.getAwesomeBar());
-        outerLayout.addView(contentView);
-
-        outerView = outerLayout;
-    }
-
-    public View getOuterView() { return outerView; }
-
-    public void start() { /*mController.start();*/ }
-}
+public abstract class PLayer {}
 

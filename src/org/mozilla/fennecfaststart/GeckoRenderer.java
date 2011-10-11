@@ -37,56 +37,51 @@
 
 package org.mozilla.fennecfaststart;
 
-import org.mozilla.fennecfaststart.GeckoView;
 import org.mozilla.fennecfaststart.LayerController;
-import org.mozilla.fennecfaststart.StaticImageLayerClient;
 import android.app.Activity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+import android.util.Log;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
-public class MainUIController {
-    private Activity mActivity;
-    //private SurfaceTestController mController;
-    private View outerView;
+public class GeckoRenderer implements GLSurfaceView.Renderer {
+    private LayerController mLayerController;
 
-    public MainUIController(Activity inActivity) {
-        mActivity = inActivity;
-        build();
+    public GeckoRenderer(LayerController layerController) { mLayerController = layerController; }
+
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        gl.glClearDepthf(1.0f);
+        gl.glEnable(GL10.GL_DEPTH_TEST);
+        gl.glDepthFunc(gl.GL_LEQUAL);
+        gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);
+        gl.glShadeModel(GL10.GL_SMOOTH);
+        gl.glDisable(GL10.GL_DITHER);
+        gl.glEnable(GL10.GL_TEXTURE_2D);
     }
 
-    public Activity getActivity() { return mActivity; }
+    public void onDrawFrame(GL10 gl) {
+        //Log.e("Fennec", "Drawing!");
 
-    /** Constructs the UI. */
-    private void build() {
-        AwesomeBarController awesomeBarController =
-            new AwesomeBarController(this);
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+        Layer rootLayer = mLayerController.getRoot();
+        if (rootLayer == null)
+            return;
 
-        // Content
-        // GeckoSurfaceView contentView = new GeckoSurfaceView(mActivity);
-        LayerController layerController = new LayerController(mActivity);
-        View contentView = layerController.getView();
-        LinearLayout.LayoutParams contentViewLayout =
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                                          ViewGroup.LayoutParams.FILL_PARENT);
-        contentViewLayout.weight = 1.0f;
-        contentView.setLayoutParams(contentViewLayout);
-
-        StaticImageLayerClient staticImageLayerClient =
-            new StaticImageLayerClient(mActivity, layerController);
-        staticImageLayerClient.init();
-
-        LinearLayout outerLayout = new LinearLayout(mActivity);
-        outerLayout.setOrientation(LinearLayout.VERTICAL);
-        outerLayout.addView(awesomeBarController.getAwesomeBar());
-        outerLayout.addView(contentView);
-
-        outerView = outerLayout;
+        rootLayer.draw(gl);
+        // TODO: Recurse down, draw children.
     }
 
-    public View getOuterView() { return outerView; }
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
+        gl.glViewport(0, 0, width, height);
+        gl.glMatrixMode(GL10.GL_PROJECTION);
+        gl.glLoadIdentity();
+        GLU.gluPerspective(gl, 45, (float)width/(float)height, 0.1f, 100.0f);
+        gl.glMatrixMode(GL10.GL_MODELVIEW);
+        gl.glLoadIdentity();
 
-    public void start() { /*mController.start();*/ }
+        // TODO
+    }
 }
 

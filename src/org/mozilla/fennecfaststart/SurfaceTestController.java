@@ -44,17 +44,47 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ActionMode;
+import android.view.ContextMenu;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import java.lang.reflect.Field;
 import java.util.Timer;
 import java.util.TimerTask;
+
+class FakeViewParent implements ViewParent {
+    public void bringChildToFront(View child) {}
+    public void childDrawableStateChanged(View child) {}
+    public void clearChildFocus(View child) {}
+    public void createContextMenu(ContextMenu menu) {}
+    public View focusSearch(View v, int direction) { return null; }
+    public void focusableViewAvailable(View v) {}
+    public boolean getChildVisibleRect(View child, Rect r, Point offset) { return false; }
+    public ViewParent getParent() { return null; }
+    public void invalidateChild(View child, Rect r) {}
+    public ViewParent invalidateChildInParent(int[] location, Rect r) { return null; }
+    public boolean isLayoutRequested() { return false; }
+    public void recomputeViewAttributes(View child) {}
+    public void requestChildFocus(View child, View focused) {}
+    public boolean requestChildRectangleOnScreen(View child, Rect rectangle, boolean immediate) {
+        return false;
+    }
+    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+    public void requestLayout() {}
+    public void requestTransparentRegion(View child) {}
+    public boolean showContextMenuForChild(View originalView) { return false; }
+    public ActionMode startActionModeForChild(View originalView, ActionMode.Callback callback) {
+        return null;
+    }
+}
 
 class SurfaceTestView extends SurfaceView implements SurfaceHolder.Callback {
     private Activity mActivity;
@@ -103,6 +133,23 @@ class SurfaceTestView extends SurfaceView implements SurfaceHolder.Callback {
         mRealHeight = (int)(Math.round(height * mDensity));
     }
 
+    @Override
+    protected void onAttachedToWindow() {
+        // HACK
+        try {
+            Class surfaceClass = View.class;
+            Field mParentField = surfaceClass.getDeclaredField("mParent");
+            Object originalParent = mParentField.get(this);
+            mParentField.set(this, new FakeViewParent());
+
+            super.onAttachedToWindow();
+
+            mParentField.set(this, originalParent);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /*
      * Surface holder interface
      */
@@ -134,7 +181,6 @@ class CircleLayout extends ViewGroup {
         mRealSize = (int)(Math.round(SurfaceTestView.SIZE / metrics.density));
     }
 
-    @Override
     protected void onAttachedToWindow() {
         getParent().requestTransparentRegion(this);
     }
