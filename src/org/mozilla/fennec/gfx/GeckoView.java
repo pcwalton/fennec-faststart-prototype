@@ -47,12 +47,20 @@ import android.opengl.GLSurfaceView;
  */
 public class GeckoView extends GLSurfaceView {
     private Activity mActivity;
+    private GeckoRenderer mRenderer;
 
     public GeckoView(Activity activity, LayerController layerController) {
         super(activity);
         mActivity = activity;
+        mRenderer = new GeckoRenderer(layerController);
+        setRenderer(mRenderer);
+    }
 
-        setRenderer(new GeckoRenderer(layerController));
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        // This is needed to subvert the Android "dips" (density independent pixels) mechanism,
+        // which will otherwise cause us to become all blurry.
+        getHolder().setFixedSize(mRenderer.dipsToRealPixels(width),
+                                 mRenderer.dipsToRealPixels(height));
     }
 }
 

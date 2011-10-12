@@ -67,7 +67,11 @@ public class StaticImageLayerClient {
     public StaticImageLayerClient(Activity activity, PLayers layerManager) {
         mLayerManager = layerManager;
 
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.nehe);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.page,
+                                                     options);
+
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
         mFormat = GeckoRenderer.bitmapConfigToCairoFormat(bitmap.getConfig());

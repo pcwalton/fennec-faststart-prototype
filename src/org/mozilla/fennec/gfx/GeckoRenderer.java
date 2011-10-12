@@ -78,18 +78,17 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glLoadIdentity();
         mBackgroundTile.draw(gl);
 
-        //rootLayer.draw(gl);
+        rootLayer.draw(gl);
         // TODO: Recurse down, draw children.
     }
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        gl.glViewport(0, 0, dipsToRealPixels(width), dipsToRealPixels(height));
+        int realWidth = dipsToRealPixels(width), realHeight = dipsToRealPixels(height);
+        Log.e("Fennec", "realWidth=" + realWidth + " realHeight=" + realHeight);
+        gl.glViewport(0, 0, realWidth, realHeight);
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
-        gl.glOrthof(0.0f, (float)dipsToRealPixels(width), (float)dipsToRealPixels(height), 0.0f,
-                    -10.0f, 10.0f);
-        Log.e("Fennec", "setting width to " + dipsToRealPixels(width) + ", height to " +
-              dipsToRealPixels(height));
+        gl.glOrthof(0.0f, (float)realWidth, 0.0f, (float)realHeight, -10.0f, 10.0f);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
@@ -124,7 +123,7 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         }
     }
 
-    private int dipsToRealPixels(int dips) {
+    public int dipsToRealPixels(int dips) {
         DisplayMetrics metrics = new DisplayMetrics();
         mLayerController.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
         return (int)Math.round(dips * metrics.density);
