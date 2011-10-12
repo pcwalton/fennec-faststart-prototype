@@ -55,7 +55,6 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import java.util.HashMap;
@@ -64,8 +63,7 @@ import java.util.HashMap;
  * A Java layer manager implementing the PLayers protocol. Does panning and zooming natively by
  * delegating to a panning/zooming controller so that the UI is usable before Gecko is up.
  */
-public class LayerController extends PLayers
-        implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
+public class LayerController extends PLayers implements ScaleGestureDetector.OnScaleGestureListener {
     // A mapping from each client shadow layer to the layer on our side.
     private HashMap<PLayer,Layer> mShadowLayers;
     // The root layer.
@@ -165,34 +163,8 @@ public class LayerController extends PLayers
      * pan/zoom controller to do the dirty work.
      */
 
-    @Override
-    public boolean onDown(MotionEvent event) { return true; }
-
-    @Override
-    public boolean onFling(MotionEvent event0, MotionEvent event1, float velocityX,
-                           float velocityY) {
-        return mPanZoomController.onFling(event0, event1, velocityX, velocityY);
-    }
-
-    @Override
-    public void onLongPress(MotionEvent event) {
-        // TODO: Pop up a menu or something.
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent event0, MotionEvent event1, float deltaX, float deltaY) {
-        return mPanZoomController.onScroll(event0, event1, deltaX, deltaY);
-    }
-
-    @Override
-    public void onShowPress(MotionEvent event) {
-        // TODO
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent event) {
-        // TODO: Forward to Gecko? Might be too high level to be useful to Gecko...
-        return true;
+    public boolean onTouchEvent(MotionEvent event) {
+        return mPanZoomController.onTouchEvent(event);
     }
 
     @Override

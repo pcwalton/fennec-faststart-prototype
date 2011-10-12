@@ -51,17 +51,17 @@ import android.view.ScaleGestureDetector;
  */
 public class GeckoView extends GLSurfaceView {
     private Activity mActivity;
-    private GestureDetector mGestureDetector;
     private GeckoRenderer mRenderer;
+    private LayerController mLayerController;
     private ScaleGestureDetector mScaleGestureDetector;
 
     public GeckoView(Activity activity, LayerController layerController) {
         super(activity);
         mActivity = activity;
-        mRenderer = new GeckoRenderer(layerController);
+        mLayerController = layerController;
+        mRenderer = new GeckoRenderer(mLayerController);
         setRenderer(mRenderer);
-        mGestureDetector = new GestureDetector(activity, layerController);
-        mScaleGestureDetector = new ScaleGestureDetector(activity, layerController);
+        mScaleGestureDetector = new ScaleGestureDetector(activity, mLayerController);
     }
 
     @Override
@@ -73,9 +73,6 @@ public class GeckoView extends GLSurfaceView {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // TODO: Send to Gecko.
-        return mGestureDetector.onTouchEvent(event);
-    }
+    public boolean onTouchEvent(MotionEvent event) { return mLayerController.onTouchEvent(event); }
 }
 
