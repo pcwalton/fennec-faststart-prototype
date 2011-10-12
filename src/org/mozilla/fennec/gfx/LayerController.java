@@ -37,6 +37,7 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennecfaststart.R;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.Layer;
@@ -48,6 +49,8 @@ import org.mozilla.fennec.ipdl.PLayers.OpCreateImageLayer;
 import org.mozilla.fennec.ipdl.PLayers.OpPaintImage;
 import org.mozilla.fennec.ipdl.PLayers.SharedImage;
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import java.util.HashMap;
 
@@ -116,5 +119,12 @@ public class LayerController extends PLayers {
 
     public Layer getRoot() { return mRootLayer; }
     public GeckoView getView() { return mGeckoView; }
+    public Activity getActivity() { return mActivity; }
+
+    public Bitmap getBackgroundPattern() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        return BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.pattern, options);
+    }
 }
 

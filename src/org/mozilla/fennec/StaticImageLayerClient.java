@@ -37,6 +37,7 @@
 
 package org.mozilla.fennec;
 
+import org.mozilla.fennec.gfx.GeckoRenderer;
 import org.mozilla.fennec.ipdl.PLayer;
 import org.mozilla.fennec.ipdl.PLayers;
 import org.mozilla.fennec.ipdl.PLayers.Edit;
@@ -69,7 +70,7 @@ public class StaticImageLayerClient {
         Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.nehe);
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
-        mFormat = bitmapConfigToCairoFormat(bitmap.getConfig());
+        mFormat = GeckoRenderer.bitmapConfigToCairoFormat(bitmap.getConfig());
         mBuffer = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
         bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
 
@@ -102,16 +103,6 @@ public class StaticImageLayerClient {
         changeset[2] = opPaintImage;
 
         mLayerManager.update(changeset);
-    }
-
-    private static int bitmapConfigToCairoFormat(Bitmap.Config config) {
-        switch (config) {
-        case ALPHA_8:   return SharedImageShmem.FORMAT_A8;
-        case ARGB_4444: throw new RuntimeException("ARGB_444 unsupported");
-        case ARGB_8888: return SharedImageShmem.FORMAT_ARGB32;
-        case RGB_565:   return SharedImageShmem.FORMAT_RGB16_565;
-        default:        throw new RuntimeException("Unknown Skia bitmap config");
-        }
     }
 }
 

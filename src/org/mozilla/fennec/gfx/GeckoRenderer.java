@@ -38,50 +38,96 @@
 package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.LayerController;
-import android.app.Activity;
+import org.mozilla.fennec.gfx.Tile;
+import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLU;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import java.nio.ByteBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class GeckoRenderer implements GLSurfaceView.Renderer {
+    private Tile mBackgroundTile;
     private LayerController mLayerController;
 
-    public GeckoRenderer(LayerController layerController) { mLayerController = layerController; }
+    public GeckoRenderer(LayerController layerController) {
+        mBackgroundTile = new Tile();
+        mLayerController = layerController;
+    }
 
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         gl.glClearDepthf(1.0f);
-        gl.glEnable(GL10.GL_DEPTH_TEST);
-        gl.glDepthFunc(gl.GL_LEQUAL);
         gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);
         gl.glShadeModel(GL10.GL_SMOOTH);
         gl.glDisable(GL10.GL_DITHER);
         gl.glEnable(GL10.GL_TEXTURE_2D);
+
+        recreateBackgroundTile(gl);
     }
 
     public void onDrawFrame(GL10 gl) {
-        //Log.e("Fennec", "Drawing!");
-
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         Layer rootLayer = mLayerController.getRoot();
         if (rootLayer == null)
             return;
 
-        rootLayer.draw(gl);
+        gl.glLoadIdentity();
+        mBackgroundTile.draw(gl);
+
+        //rootLayer.draw(gl);
         // TODO: Recurse down, draw children.
     }
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        gl.glViewport(0, 0, width, height);
+        gl.glViewport(0, 0, dipsToRealPixels(width), dipsToRealPixels(height));
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
-        GLU.gluPerspective(gl, 45, (float)width/(float)height, 0.1f, 100.0f);
+        gl.glOrthof(0.0f, (float)dipsToRealPixels(width), (float)dipsToRealPixels(height), 0.0f,
+                    -10.0f, 10.0f);
+        Log.e("Fennec", "setting width to " + dipsToRealPixels(width) + ", height to " +
+              dipsToRealPixels(height));
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
+        recreateBackgroundTile(gl);
+
         // TODO
+    }
+
+    private void recreateBackgroundTile(GL10 gl) {
+        Bitmap backgroundBitmap = mLayerController.getBackgroundPattern();
+        int cairoFormat = bitmapConfigToCairoFormat(backgroundBitmap.getConfig());
+        int width = backgroundBitmap.getWidth(), height = backgroundBitmap.getHeight();
+        Log.e("Fennec", "background tile width = " + width);
+        ByteBuffer backgroundBitmapByteBuffer = ByteBuffer.allocateDirect(width * height * 4);
+        backgroundBitmap.copyPixelsToBuffer(backgroundBitmapByteBuffer.asIntBuffer());
+
+        SharedImageShmem backgroundImageShmem = new SharedImageShmem();
+        backgroundImageShmem.buffer = backgroundBitmapByteBuffer;
+        backgroundImageShmem.width = width;
+        backgroundImageShmem.height = height;
+        backgroundImageShmem.format = cairoFormat;
+        mBackgroundTile.setImage(gl, backgroundImageShmem);
+    }
+
+    public static int bitmapConfigToCairoFormat(Bitmap.Config config) {
+        switch (config) {
+        case ALPHA_8:   return SharedImageShmem.FORMAT_A8;
+        case ARGB_4444: throw new RuntimeException("ARGB_444 unsupported");
+        case ARGB_8888: return SharedImageShmem.FORMAT_ARGB32;
+        case RGB_565:   return SharedImageShmem.FORMAT_RGB16_565;
+        default:        throw new RuntimeException("Unknown Skia bitmap config");
+        }
+    }
+
+    private int dipsToRealPixels(int dips) {
+        DisplayMetrics metrics = new DisplayMetrics();
+        mLayerController.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        return (int)Math.round(dips * metrics.density);
     }
 }
 
