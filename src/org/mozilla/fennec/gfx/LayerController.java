@@ -48,16 +48,22 @@ import org.mozilla.fennec.ipdl.PLayers.EditReply;
 import org.mozilla.fennec.ipdl.PLayers.OpCreateImageLayer;
 import org.mozilla.fennec.ipdl.PLayers.OpPaintImage;
 import org.mozilla.fennec.ipdl.PLayers.SharedImage;
+import org.mozilla.fennec.ipdl.nsIntRect;
+import org.mozilla.fennec.ipdl.nsIntSize;
+import org.mozilla.fennec.ui.PanZoomController;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import java.util.HashMap;
 
 /*
- * A Java layer manager. Implements the PLayers protocol.
+ * A Java layer manager implementing the PLayers protocol. Does panning and zooming natively by
+ * delegating to a panning/zooming controller so that the UI is usable before Gecko is up.
  */
-public class LayerController extends PLayers {
+public class LayerController extends PLayers implements GestureDetector.OnGestureListener {
     // A mapping from each client shadow layer to the layer on our side.
     private HashMap<PLayer,Layer> mShadowLayers;
     // The root layer.
@@ -66,11 +72,21 @@ public class LayerController extends PLayers {
     private GeckoView mGeckoView;
     // The current activity.
     private Activity mActivity;
+    // The current page size in pixels.
+    private nsIntSize mPageSize;
+    // The current visible region.
+    private nsIntRect mVisibleRect;
+    // The panning and zooming controller, which interprets pan and zoom gestures for us and
+    // updates our visible rect appropriately.
+    private PanZoomController mPanZoomController;
 
     public LayerController(Activity activity) {
         mShadowLayers = new HashMap<PLayer,Layer>();
         mGeckoView = new GeckoView(activity, this);
         mActivity = activity;
+        mPageSize = new nsIntSize(995, 1250);       // TODO: Make this real.
+        mVisibleRect = new nsIntRect(0, 0, 0, 0);   // Gets filled in when the surface changes.
+        mPanZoomController = new PanZoomController(this);
     }
 
     /*
@@ -120,11 +136,60 @@ public class LayerController extends PLayers {
     public Layer getRoot() { return mRootLayer; }
     public GeckoView getView() { return mGeckoView; }
     public Activity getActivity() { return mActivity; }
+    public nsIntSize getPageSize() { return mPageSize; }
+    public nsIntRect getVisibleRect() { return mVisibleRect; }
 
     public Bitmap getBackgroundPattern() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         return BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.pattern, options);
+    }
+
+    public void onViewportSizeChanged(int newWidth, int newHeight) {
+        mVisibleRect.width = newWidth; mVisibleRect.height = newHeight;
+    }
+
+    public void setNeedsDisplay() {
+        // TODO
+    }
+
+    public void scrollTo(int x, int y) {
+        mVisibleRect.x = x; mVisibleRect.y = y;
+        setNeedsDisplay();
+    }
+
+    /*
+     * Gesture detection. This is handled only at a high level here; we dispatch to the pan/zoom
+     * controller to do the dirty work.
+     */
+    @Override
+    public boolean onDown(MotionEvent event) { return true; }
+
+    @Override
+    public boolean onFling(MotionEvent event0, MotionEvent event1, float velocityX,
+                           float velocityY) {
+        return mPanZoomController.onFling(event0, event1, velocityX, velocityY);
+    }
+
+    @Override
+    public void onLongPress(MotionEvent event) {
+        // TODO: Pop up a menu or something.
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent event0, MotionEvent event1, float deltaX, float deltaY) {
+        return mPanZoomController.onScroll(event0, event1, deltaX, deltaY);
+    }
+
+    @Override
+    public void onShowPress(MotionEvent event) {
+        // TODO
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent event) {
+        // TODO: Forward to Gecko? Might be too high level to be useful to Gecko...
+        return true;
     }
 }
 

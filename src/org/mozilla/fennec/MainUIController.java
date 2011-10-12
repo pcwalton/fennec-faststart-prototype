@@ -43,6 +43,7 @@ import org.mozilla.fennec.gfx.LayerController;
 import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -60,6 +61,8 @@ public class MainUIController {
 
     /** Constructs the UI. */
     private void build() {
+        mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         AwesomeBarController awesomeBarController =
             new AwesomeBarController(this);
 

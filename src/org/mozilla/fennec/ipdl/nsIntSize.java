@@ -35,44 +35,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.fennec.ipdl;
 
-import org.mozilla.fennec.gfx.GeckoRenderer;
-import org.mozilla.fennec.gfx.LayerController;
-import android.app.Activity;
-import android.opengl.GLSurfaceView;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
-
-/*
- * A pannable, zoomable Gecko rendering view. The drawing logic is in GeckoRenderer, while the
- * layer controller drives the view's logic.
- */
-public class GeckoView extends GLSurfaceView {
-    private Activity mActivity;
-    private GestureDetector mGestureDetector;
-    private GeckoRenderer mRenderer;
-
-    public GeckoView(Activity activity, LayerController layerController) {
-        super(activity);
-        mActivity = activity;
-        mRenderer = new GeckoRenderer(layerController);
-        setRenderer(mRenderer);
-        mGestureDetector = new GestureDetector(activity, layerController);
-    }
-
-    @Override
-    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
-        // This is needed to subvert the Android "dips" (density independent pixels) mechanism,
-        // which will otherwise cause us to become all blurry.
-        getHolder().setFixedSize(mRenderer.dipsToRealPixels(width),
-                                 mRenderer.dipsToRealPixels(height));
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // TODO: Send to Gecko.
-        return mGestureDetector.onTouchEvent(event);
-    }
+public class nsIntSize {
+    public int width, height;
+    public nsIntSize(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 }
 

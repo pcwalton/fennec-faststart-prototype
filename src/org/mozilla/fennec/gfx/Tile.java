@@ -61,10 +61,10 @@ public class Tile {
     };
 
     private static final float[] TEX_COORDS = {
-        0.0f, 1.0f,
-        1.0f, 1.0f,
         0.0f, 0.0f,
-        1.0f, 0.0f
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 1.0f
     };
 
     public Tile() {

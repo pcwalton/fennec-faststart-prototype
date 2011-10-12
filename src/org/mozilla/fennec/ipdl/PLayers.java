@@ -38,12 +38,12 @@
 package org.mozilla.fennec.ipdl;
 
 import org.mozilla.fennec.ipdl.PLayer;
+import org.mozilla.fennec.ipdl.nsIntRect;
 import android.graphics.Bitmap;
 import java.nio.ByteBuffer;
 
 // Converted from the IPDL at gfx/layers/ipc/PLayers.ipdl.
 public abstract class PLayers {
-    public static class nsIntRect { public int x, y, width, height; }
     public static class nsIntRegion { public nsIntRect rect; /* TODO */ }
     public static class gfx3DMatrix {
         public float _11, _12, _13, _14;

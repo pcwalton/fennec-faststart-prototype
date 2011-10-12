@@ -40,6 +40,8 @@ package org.mozilla.fennec.gfx;
 import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.gfx.Tile;
 import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
+import org.mozilla.fennec.ipdl.nsIntRect;
+import org.mozilla.fennec.ipdl.nsIntSize;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
@@ -78,21 +80,29 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glLoadIdentity();
         mBackgroundTile.draw(gl);
 
+        nsIntSize pageSize = mLayerController.getPageSize();
+        nsIntRect visibleRect = mLayerController.getVisibleRect();
+        gl.glLoadIdentity();
+        gl.glTranslatef(-visibleRect.x, -visibleRect.y, 0.0f);
+
         rootLayer.draw(gl);
         // TODO: Recurse down, draw children.
     }
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        int realWidth = dipsToRealPixels(width), realHeight = dipsToRealPixels(height);
+        //int realWidth = dipsToRealPixels(width), realHeight = dipsToRealPixels(height);
+        int realWidth = width, realHeight = height;
         Log.e("Fennec", "realWidth=" + realWidth + " realHeight=" + realHeight);
         gl.glViewport(0, 0, realWidth, realHeight);
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
-        gl.glOrthof(0.0f, (float)realWidth, 0.0f, (float)realHeight, -10.0f, 10.0f);
+        gl.glOrthof(0.0f, (float)realWidth, (float)realHeight, 0.0f, -10.0f, 10.0f);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
         recreateBackgroundTile(gl);
+
+        mLayerController.onViewportSizeChanged(realWidth, realHeight);
 
         // TODO
     }
