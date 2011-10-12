@@ -57,13 +57,15 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import java.util.HashMap;
 
 /*
  * A Java layer manager implementing the PLayers protocol. Does panning and zooming natively by
  * delegating to a panning/zooming controller so that the UI is usable before Gecko is up.
  */
-public class LayerController extends PLayers implements GestureDetector.OnGestureListener {
+public class LayerController extends PLayers
+        implements GestureDetector.OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
     // A mapping from each client shadow layer to the layer on our side.
     private HashMap<PLayer,Layer> mShadowLayers;
     // The root layer.
@@ -159,9 +161,10 @@ public class LayerController extends PLayers implements GestureDetector.OnGestur
     }
 
     /*
-     * Gesture detection. This is handled only at a high level here; we dispatch to the pan/zoom
-     * controller to do the dirty work.
+     * Gesture detection. This is handled only at a high level in this class; we dispatch to the
+     * pan/zoom controller to do the dirty work.
      */
+
     @Override
     public boolean onDown(MotionEvent event) { return true; }
 
@@ -190,6 +193,21 @@ public class LayerController extends PLayers implements GestureDetector.OnGestur
     public boolean onSingleTapUp(MotionEvent event) {
         // TODO: Forward to Gecko? Might be too high level to be useful to Gecko...
         return true;
+    }
+
+    @Override
+    public boolean onScale(ScaleGestureDetector detector) {
+        return mPanZoomController.onScale(detector);
+    }
+
+    @Override
+    public boolean onScaleBegin(ScaleGestureDetector detector) {
+        return mPanZoomController.onScaleBegin(detector);
+    }
+
+    @Override
+    public void onScaleEnd(ScaleGestureDetector detector) {
+        mPanZoomController.onScaleEnd(detector);
     }
 }
 

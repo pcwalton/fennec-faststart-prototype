@@ -43,6 +43,7 @@ import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 
 /*
  * A pannable, zoomable Gecko rendering view. The drawing logic is in GeckoRenderer, while the
@@ -52,6 +53,7 @@ public class GeckoView extends GLSurfaceView {
     private Activity mActivity;
     private GestureDetector mGestureDetector;
     private GeckoRenderer mRenderer;
+    private ScaleGestureDetector mScaleGestureDetector;
 
     public GeckoView(Activity activity, LayerController layerController) {
         super(activity);
@@ -59,6 +61,7 @@ public class GeckoView extends GLSurfaceView {
         mRenderer = new GeckoRenderer(layerController);
         setRenderer(mRenderer);
         mGestureDetector = new GestureDetector(activity, layerController);
+        mScaleGestureDetector = new ScaleGestureDetector(activity, layerController);
     }
 
     @Override

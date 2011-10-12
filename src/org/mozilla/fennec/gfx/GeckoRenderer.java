@@ -55,9 +55,16 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     private Tile mBackgroundTile;
     private LayerController mLayerController;
 
+    // FPS display
+    private long mFrameCountTimestamp;
+    private int mFrameCount;            // number of frames since last timestamp
+
     public GeckoRenderer(LayerController layerController) {
         mBackgroundTile = new Tile();
         mLayerController = layerController;
+
+        mFrameCountTimestamp = System.currentTimeMillis();
+        mFrameCount = 0;
     }
 
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -72,6 +79,8 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     }
 
     public void onDrawFrame(GL10 gl) {
+        checkFPS();
+
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         Layer rootLayer = mLayerController.getRoot();
         if (rootLayer == null)
@@ -137,6 +146,16 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         DisplayMetrics metrics = new DisplayMetrics();
         mLayerController.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
         return (int)Math.round(dips * metrics.density);
+    }
+
+    private void checkFPS() {
+        if (System.currentTimeMillis() >= mFrameCountTimestamp + 1000) {
+            mFrameCountTimestamp = System.currentTimeMillis();
+            Log.e("Fennec", "" + mFrameCount + " FPS");
+            mFrameCount = 0;
+        } else {
+            mFrameCount++;
+        }
     }
 }
 
