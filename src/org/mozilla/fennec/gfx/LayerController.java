@@ -76,6 +76,8 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
     private nsIntSize mPageSize;
     // The current visible region.
     private nsIntRect mVisibleRect;
+    // The natural size of the visible region, without any zoom applied.
+    private nsIntSize mNaturalViewportSize;
     // The panning and zooming controller, which interprets pan and zoom gestures for us and
     // updates our visible rect appropriately.
     private PanZoomController mPanZoomController;
@@ -84,8 +86,9 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
         mShadowLayers = new HashMap<PLayer,Layer>();
         mGeckoView = new GeckoView(activity, this);
         mActivity = activity;
-        mPageSize = new nsIntSize(970, 1024);   // TODO: Make this real.
-        mVisibleRect = new nsIntRect(0, 0, 0, 0);   // Gets filled in when the surface changes.
+        mPageSize = new nsIntSize(970, 1024);       // TODO: Make this real.
+        mVisibleRect = new nsIntRect(0, 0, 1, 1);   // Gets filled in when the surface changes.
+        mNaturalViewportSize = new nsIntSize(1, 1);
         mPanZoomController = new PanZoomController(this);
     }
 
@@ -138,6 +141,7 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
     public Activity getActivity() { return mActivity; }
     public nsIntSize getPageSize() { return mPageSize; }
     public nsIntRect getVisibleRect() { return mVisibleRect; }
+    public nsIntSize getNaturalViewportSize() { return mNaturalViewportSize; }
 
     public Bitmap getBackgroundPattern() {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -145,8 +149,15 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
         return BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.pattern, options);
     }
 
+    public float getZoomFactor() {
+        return (float)mNaturalViewportSize.width / (float)mVisibleRect.width;
+    }
+
     public void onViewportSizeChanged(int newWidth, int newHeight) {
-        mVisibleRect.width = newWidth; mVisibleRect.height = newHeight;
+        float zoomFactor = getZoomFactor();
+        mNaturalViewportSize.width = newWidth; mNaturalViewportSize.height = newHeight;
+        mVisibleRect.width = (int)Math.round((float)newWidth / zoomFactor);
+        mVisibleRect.height = (int)Math.round((float)newHeight / zoomFactor);
     }
 
     public void setNeedsDisplay() {
@@ -155,6 +166,12 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
 
     public void scrollTo(int x, int y) {
         mVisibleRect.x = x; mVisibleRect.y = y;
+        setNeedsDisplay();
+    }
+
+    public void setVisibleRect(int x, int y, int width, int height) {
+        mVisibleRect.x = x; mVisibleRect.y = y;
+        mVisibleRect.width = width; mVisibleRect.height = height;
         setNeedsDisplay();
     }
 

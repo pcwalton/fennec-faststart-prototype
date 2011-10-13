@@ -77,6 +77,8 @@ public class PanZoomController {
     private long mLastTimestamp;
     private Timer mFlingTimer;
     private Axis mX, mY;
+    private float mInitialZoomSpan;     // The span at the first zoom event.
+    private nsIntRect mInitialZoomRect;
 
     public PanZoomController(LayerController controller) {
         mController = controller;
@@ -166,6 +168,7 @@ public class PanZoomController {
     private void populatePositionAndLength() {
         nsIntSize pageSize = mController.getPageSize();
         nsIntRect visibleRect = mController.getVisibleRect();
+        nsIntSize naturalViewportSize = mController.getNaturalViewportSize();
 
         mX.setPageLength(pageSize.width);
         mX.viewportPos = visibleRect.x;
@@ -238,10 +241,14 @@ public class PanZoomController {
         // These three need to be kept in sync with the layer controller.
         public int viewportPos;
         private int mViewportLength;
+        private int mNaturalViewportLength;     // The viewport length with no zoom applied.
         private int mPageLength;
 
         public int getFlingState() { return mFlingState; }
         public void setViewportLength(int viewportLength) { mViewportLength = viewportLength; }
+        public void setNaturalViewportLength(int naturalViewportLength) {
+            mNaturalViewportLength = naturalViewportLength;
+        }
         public void setPageLength(int pageLength) { mPageLength = pageLength; }
 
         private int getViewportEnd() { return viewportPos + mViewportLength; }
@@ -409,13 +416,22 @@ public class PanZoomController {
      * Zooming
      */
 
+    // FIXME: This is ridiculously wrong.
     public boolean onScale(ScaleGestureDetector detector) {
-        // TODO
+        nsIntSize naturalViewportSize = mController.getNaturalViewportSize();
+        float newFactor = detector.getCurrentSpan() / mInitialZoomSpan;
+
+        float width = mInitialZoomRect.width / newFactor;
+        float height = mInitialZoomRect.height / newFactor;
+        float x = mInitialZoomRect.x, y = mInitialZoomRect.y;
+        mController.setVisibleRect((int)Math.round(x), (int)Math.round(y),
+                                   (int)Math.round(width), (int)Math.round(height));
         return true;
     }
 
     public boolean onScaleBegin(ScaleGestureDetector detector) {
-        // TODO
+        mInitialZoomSpan = detector.getCurrentSpan();
+        mInitialZoomRect = (nsIntRect)mController.getVisibleRect().clone();
         return true;
     }
 

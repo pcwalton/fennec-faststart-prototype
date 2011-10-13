@@ -73,6 +73,10 @@ public class GeckoView extends GLSurfaceView {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) { return mLayerController.onTouchEvent(event); }
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean result = mScaleGestureDetector.onTouchEvent(event);
+        result = mLayerController.onTouchEvent(event) || result;
+        return result;
+    }
 }
 

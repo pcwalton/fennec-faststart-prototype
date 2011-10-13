@@ -91,7 +91,10 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
 
         nsIntSize pageSize = mLayerController.getPageSize();
         nsIntRect visibleRect = mLayerController.getVisibleRect();
+        float zoomFactor = mLayerController.getZoomFactor();
+
         gl.glLoadIdentity();
+        gl.glScalef(zoomFactor, zoomFactor, 1.0f);
         gl.glTranslatef(-visibleRect.x, -visibleRect.y, 0.0f);
 
         rootLayer.draw(gl);

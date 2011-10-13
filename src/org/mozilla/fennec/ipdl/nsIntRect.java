@@ -37,11 +37,14 @@
 
 package org.mozilla.fennec.ipdl;
 
-public class nsIntRect {
+public class nsIntRect implements Cloneable {
     public int x, y, width, height;
 
     public nsIntRect(int inX, int inY, int inWidth, int inHeight) {
         x = inX; y = inY; width = inWidth; height = inHeight;
     }
+
+    @Override
+    public Object clone() { return new nsIntRect(x, y, width, height); }
 }
 
