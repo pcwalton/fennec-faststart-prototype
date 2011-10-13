@@ -67,7 +67,6 @@ public class MainUIController {
             new AwesomeBarController(this);
 
         // Content
-        // GeckoSurfaceView contentView = new GeckoSurfaceView(mActivity);
         LayerController layerController = new LayerController(mActivity);
         View contentView = layerController.getView();
         LinearLayout.LayoutParams contentViewLayout =
@@ -89,7 +88,5 @@ public class MainUIController {
     }
 
     public View getOuterView() { return outerView; }
-
-    public void start() { /*mController.start();*/ }
 }
 
