@@ -84,7 +84,7 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
         mShadowLayers = new HashMap<PLayer,Layer>();
         mGeckoView = new GeckoView(activity, this);
         mActivity = activity;
-        mPageSize = new nsIntSize(995, 1250);       // TODO: Make this real.
+        mPageSize = new nsIntSize(970, 1024);   // TODO: Make this real.
         mVisibleRect = new nsIntRect(0, 0, 0, 0);   // Gets filled in when the surface changes.
         mPanZoomController = new PanZoomController(this);
     }
@@ -157,6 +157,8 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
         mVisibleRect.x = x; mVisibleRect.y = y;
         setNeedsDisplay();
     }
+
+    public boolean post(Runnable action) { return mGeckoView.post(action); }
 
     /*
      * Gesture detection. This is handled only at a high level in this class; we dispatch to the
