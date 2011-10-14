@@ -40,9 +40,9 @@ package org.mozilla.fennec.gfx;
 import org.mozilla.fennecfaststart.R;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.ImageLayer;
+import org.mozilla.fennec.gfx.IntRect;
+import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
-import org.mozilla.fennec.ipdl.nsIntRect;
-import org.mozilla.fennec.ipdl.nsIntSize;
 import org.mozilla.fennec.ui.PanZoomController;
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -64,11 +64,11 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     // The current activity.
     private Activity mActivity;
     // The current page size in pixels.
-    private nsIntSize mPageSize;
+    private IntSize mPageSize;
     // The current visible region.
-    private nsIntRect mVisibleRect;
+    private IntRect mVisibleRect;
     // The natural size of the visible region, without any zoom applied.
-    private nsIntSize mNaturalViewportSize;
+    private IntSize mNaturalViewportSize;
     // The panning and zooming controller, which interprets pan and zoom gestures for us and
     // updates our visible rect appropriately.
     private PanZoomController mPanZoomController;
@@ -76,9 +76,9 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public LayerController(Activity activity) {
         mGeckoView = new GeckoView(activity, this);
         mActivity = activity;
-        mPageSize = new nsIntSize(970, 1024);       // TODO: Make this real.
-        mVisibleRect = new nsIntRect(0, 0, 1, 1);   // Gets filled in when the surface changes.
-        mNaturalViewportSize = new nsIntSize(1, 1);
+        mPageSize = new IntSize(970, 1024);       // TODO: Make this real.
+        mVisibleRect = new IntRect(0, 0, 1, 1);   // Gets filled in when the surface changes.
+        mNaturalViewportSize = new IntSize(1, 1);
         mPanZoomController = new PanZoomController(this);
     }
 
@@ -91,9 +91,9 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public Layer getRoot() { return mRootLayer; }
     public GeckoView getView() { return mGeckoView; }
     public Activity getActivity() { return mActivity; }
-    public nsIntSize getPageSize() { return mPageSize; }
-    public nsIntRect getVisibleRect() { return mVisibleRect; }
-    public nsIntSize getNaturalViewportSize() { return mNaturalViewportSize; }
+    public IntSize getPageSize() { return mPageSize; }
+    public IntRect getVisibleRect() { return mVisibleRect; }
+    public IntSize getNaturalViewportSize() { return mNaturalViewportSize; }
 
     public Bitmap getBackgroundPattern() {
         BitmapFactory.Options options = new BitmapFactory.Options();

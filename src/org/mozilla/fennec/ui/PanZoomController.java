@@ -37,9 +37,9 @@
 
 package org.mozilla.fennec.ui;
 
+import org.mozilla.fennec.gfx.IntRect;
+import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.ipdl.nsIntRect;
-import org.mozilla.fennec.ipdl.nsIntSize;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -78,7 +78,7 @@ public class PanZoomController {
     private Timer mFlingTimer;
     private Axis mX, mY;
     private float mInitialZoomSpan;     // The span at the first zoom event.
-    private nsIntRect mInitialZoomRect;
+    private IntRect mInitialZoomRect;
 
     public PanZoomController(LayerController controller) {
         mController = controller;
@@ -166,9 +166,9 @@ public class PanZoomController {
 
     // Populates the viewport info and length in the axes.
     private void populatePositionAndLength() {
-        nsIntSize pageSize = mController.getPageSize();
-        nsIntRect visibleRect = mController.getVisibleRect();
-        nsIntSize naturalViewportSize = mController.getNaturalViewportSize();
+        IntSize pageSize = mController.getPageSize();
+        IntRect visibleRect = mController.getVisibleRect();
+        IntSize naturalViewportSize = mController.getNaturalViewportSize();
 
         mX.setPageLength(pageSize.width);
         mX.viewportPos = visibleRect.x;
@@ -418,7 +418,7 @@ public class PanZoomController {
 
     // FIXME: This is ridiculously wrong.
     public boolean onScale(ScaleGestureDetector detector) {
-        nsIntSize naturalViewportSize = mController.getNaturalViewportSize();
+        IntSize naturalViewportSize = mController.getNaturalViewportSize();
         float newFactor = detector.getCurrentSpan() / mInitialZoomSpan;
 
         float width = mInitialZoomRect.width / newFactor;
@@ -431,7 +431,7 @@ public class PanZoomController {
 
     public boolean onScaleBegin(ScaleGestureDetector detector) {
         mInitialZoomSpan = detector.getCurrentSpan();
-        mInitialZoomRect = (nsIntRect)mController.getVisibleRect().clone();
+        mInitialZoomRect = (IntRect)mController.getVisibleRect().clone();
         return true;
     }
 

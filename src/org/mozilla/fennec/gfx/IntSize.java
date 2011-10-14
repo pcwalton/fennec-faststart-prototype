@@ -35,16 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.ipdl;
+package org.mozilla.fennec.gfx;
 
-public class nsIntRect implements Cloneable {
-    public int x, y, width, height;
+public class IntSize {
+    public int width, height;
 
-    public nsIntRect(int inX, int inY, int inWidth, int inHeight) {
-        x = inX; y = inY; width = inWidth; height = inHeight;
-    }
-
-    @Override
-    public Object clone() { return new nsIntRect(x, y, width, height); }
+    public IntSize(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 }
 

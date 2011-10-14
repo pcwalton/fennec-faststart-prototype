@@ -37,10 +37,10 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.IntRect;
+import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.gfx.Tile;
-import org.mozilla.fennec.ipdl.nsIntRect;
-import org.mozilla.fennec.ipdl.nsIntSize;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
@@ -88,8 +88,8 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glLoadIdentity();
         mBackgroundTile.draw(gl);
 
-        nsIntSize pageSize = mLayerController.getPageSize();
-        nsIntRect visibleRect = mLayerController.getVisibleRect();
+        IntSize pageSize = mLayerController.getPageSize();
+        IntRect visibleRect = mLayerController.getVisibleRect();
         float zoomFactor = mLayerController.getZoomFactor();
 
         gl.glLoadIdentity();
