@@ -41,11 +41,13 @@ import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.gfx.Tile;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.WindowManager;
 import java.nio.ByteBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -101,19 +103,16 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     }
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        //int realWidth = dipsToRealPixels(width), realHeight = dipsToRealPixels(height);
-        int realWidth = width, realHeight = height;
-        Log.e("Fennec", "realWidth=" + realWidth + " realHeight=" + realHeight);
-        gl.glViewport(0, 0, realWidth, realHeight);
+        gl.glViewport(0, 0, width, height);
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadIdentity();
-        gl.glOrthof(0.0f, (float)realWidth, (float)realHeight, 0.0f, -10.0f, 10.0f);
+        gl.glOrthof(0.0f, (float)width, (float)height, 0.0f, -10.0f, 10.0f);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
         recreateBackgroundTile(gl);
 
-        mLayerController.onViewportSizeChanged(realWidth, realHeight);
+        mLayerController.onViewportSizeChanged(width, height);
 
         // TODO
     }
@@ -139,12 +138,6 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         case RGB_565:   return CairoImage.FORMAT_RGB16_565;
         default:        throw new RuntimeException("Unknown Skia bitmap config");
         }
-    }
-
-    public int dipsToRealPixels(int dips) {
-        DisplayMetrics metrics = new DisplayMetrics();
-        mLayerController.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        return (int)Math.round(dips * metrics.density);
     }
 
     private void checkFPS() {

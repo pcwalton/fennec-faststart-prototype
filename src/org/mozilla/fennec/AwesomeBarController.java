@@ -37,7 +37,6 @@
 
 package org.mozilla.fennec;
 
-import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -54,10 +53,10 @@ public class AwesomeBarController {
 
     /** Constructs the Awesome Bar widgets. */
     private void build() {
-        LinearLayout layout = new LinearLayout(mainUIController.getActivity());
+        LinearLayout layout = new LinearLayout(mainUIController.getContext());
         layout.setOrientation(LinearLayout.HORIZONTAL);
 
-        EditText textBox = new EditText(mainUIController.getActivity());
+        EditText textBox = new EditText(mainUIController.getContext());
         LinearLayout.LayoutParams textBoxLayoutParams =
             new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                                           ViewGroup.LayoutParams.WRAP_CONTENT);

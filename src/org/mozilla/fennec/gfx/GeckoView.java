@@ -39,7 +39,7 @@ package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.GeckoRenderer;
 import org.mozilla.fennec.gfx.LayerController;
-import android.app.Activity;
+import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -50,26 +50,18 @@ import android.view.ScaleGestureDetector;
  * layer controller drives the view's logic.
  */
 public class GeckoView extends GLSurfaceView {
-    private Activity mActivity;
+    private Context mContext;
     private GeckoRenderer mRenderer;
     private LayerController mLayerController;
     private ScaleGestureDetector mScaleGestureDetector;
 
-    public GeckoView(Activity activity, LayerController layerController) {
-        super(activity);
-        mActivity = activity;
+    public GeckoView(Context context, LayerController layerController) {
+        super(context);
+        mContext = context;
         mLayerController = layerController;
         mRenderer = new GeckoRenderer(mLayerController);
         setRenderer(mRenderer);
-        mScaleGestureDetector = new ScaleGestureDetector(activity, mLayerController);
-    }
-
-    @Override
-    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
-        // This is needed to subvert the Android "dips" (density independent pixels) mechanism,
-        // which will otherwise cause us to become all blurry.
-        getHolder().setFixedSize(mRenderer.dipsToRealPixels(width),
-                                 mRenderer.dipsToRealPixels(height));
+        mScaleGestureDetector = new ScaleGestureDetector(context, mLayerController);
     }
 
     @Override

@@ -41,8 +41,8 @@ import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.GeckoRenderer;
 import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennecfaststart.R;
-import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -53,19 +53,20 @@ import java.nio.ByteBuffer;
  * layer manager. We use this as a placeholder until Gecko is up.
  */
 public class StaticImageLayerClient {
-    private Activity mActivity;
+    private Context mContext;
     private LayerController mLayerController;
     private int mWidth, mHeight, mFormat;
     private ByteBuffer mBuffer;
 
-    public StaticImageLayerClient(Activity activity, LayerController layerController) {
-        mActivity = activity;
+    public StaticImageLayerClient(Context context, LayerController layerController) {
+        mContext = context;
         mLayerController = layerController;
 
+        Resources resources = context.getResources();
+        int resourceID = resources.getIdentifier("page", "drawable", mContext.getPackageName());
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getResources(), R.drawable.page,
-                                                     options);
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
 
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
@@ -77,7 +78,7 @@ public class StaticImageLayerClient {
     }
 
     public void init() {
-        ImageLayer imageLayer = new ImageLayer(mActivity);
+        ImageLayer imageLayer = new ImageLayer();
         mLayerController.setRoot(imageLayer);
         imageLayer.paintImage(new CairoImage(mBuffer, mWidth, mHeight, mFormat));
     }

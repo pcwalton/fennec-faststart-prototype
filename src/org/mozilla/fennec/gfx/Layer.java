@@ -37,7 +37,6 @@
 
 package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennec.ipdl.PLayer;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Layer {

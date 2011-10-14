@@ -37,14 +37,14 @@
 
 package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennecfaststart.R;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
 import org.mozilla.fennec.ui.PanZoomController;
-import android.app.Activity;
+import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -61,8 +61,8 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     private Layer mRootLayer;
     // The main Gecko rendering view.
     private GeckoView mGeckoView;
-    // The current activity.
-    private Activity mActivity;
+    // The current context.
+    private Context mContext;
     // The current page size in pixels.
     private IntSize mPageSize;
     // The current visible region.
@@ -73,9 +73,9 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     // updates our visible rect appropriately.
     private PanZoomController mPanZoomController;
 
-    public LayerController(Activity activity) {
-        mGeckoView = new GeckoView(activity, this);
-        mActivity = activity;
+    public LayerController(Context context) {
+        mGeckoView = new GeckoView(context, this);
+        mContext = context;
         mPageSize = new IntSize(970, 1024);       // TODO: Make this real.
         mVisibleRect = new IntRect(0, 0, 1, 1);   // Gets filled in when the surface changes.
         mNaturalViewportSize = new IntSize(1, 1);
@@ -90,15 +90,17 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
 
     public Layer getRoot() { return mRootLayer; }
     public GeckoView getView() { return mGeckoView; }
-    public Activity getActivity() { return mActivity; }
+    public Context getContext() { return mContext; }
     public IntSize getPageSize() { return mPageSize; }
     public IntRect getVisibleRect() { return mVisibleRect; }
     public IntSize getNaturalViewportSize() { return mNaturalViewportSize; }
 
     public Bitmap getBackgroundPattern() {
+        Resources resources = mContext.getResources();
+        int resourceID = resources.getIdentifier("pattern", "drawable", mContext.getPackageName());
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
-        return BitmapFactory.decodeResource(mActivity.getResources(), R.drawable.pattern, options);
+        return BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
     }
 
     public float getZoomFactor() {

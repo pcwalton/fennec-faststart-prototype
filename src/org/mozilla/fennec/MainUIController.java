@@ -41,6 +41,7 @@ import org.mozilla.fennec.StaticImageLayerClient;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.LayerController;
 import android.app.Activity;
+import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -52,19 +53,19 @@ public class MainUIController {
     //private SurfaceTestController mController;
     private View outerView;
 
-    public MainUIController(Activity inActivity) {
-        mActivity = inActivity;
+    public MainUIController(Activity activity) {
+        mActivity = activity;
         build();
     }
 
-    public Activity getActivity() { return mActivity; }
+    public Context getContext() { return mActivity; }
 
     /** Constructs the UI. */
     private void build() {
         mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        AwesomeBarController awesomeBarController =
-            new AwesomeBarController(this);
+        /*AwesomeBarController awesomeBarController =
+            new AwesomeBarController(this);*/
 
         // Content
         LayerController layerController = new LayerController(mActivity);
@@ -75,16 +76,17 @@ public class MainUIController {
         contentViewLayout.weight = 1.0f;
         contentView.setLayoutParams(contentViewLayout);
 
-        StaticImageLayerClient staticImageLayerClient =
-            new StaticImageLayerClient(mActivity, layerController);
+        StaticImageLayerClient staticImageLayerClient = new StaticImageLayerClient(mActivity,
+                                                                                   layerController);
         staticImageLayerClient.init();
 
-        LinearLayout outerLayout = new LinearLayout(mActivity);
+        /*LinearLayout outerLayout = new LinearLayout(mActivity);
         outerLayout.setOrientation(LinearLayout.VERTICAL);
         outerLayout.addView(awesomeBarController.getAwesomeBar());
         outerLayout.addView(contentView);
 
-        outerView = outerLayout;
+        outerView = outerLayout;*/
+        outerView = contentView;
     }
 
     public View getOuterView() { return outerView; }

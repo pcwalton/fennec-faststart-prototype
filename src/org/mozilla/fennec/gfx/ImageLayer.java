@@ -40,18 +40,16 @@ package org.mozilla.fennec.gfx;
 import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.Layer;
 import org.mozilla.fennec.gfx.Tile;
-import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
 import javax.microedition.khronos.opengles.GL10;
 
 public class ImageLayer extends Layer {
     private CairoImage mImage;
     private boolean mSurfaceDirty;
-    private Activity mActivity;
     private Tile mTile;
 
-    public ImageLayer(Activity activity) {
-        mActivity = activity;
+    public ImageLayer() {
         mSurfaceDirty = true;
         mTile = new Tile();
     }
