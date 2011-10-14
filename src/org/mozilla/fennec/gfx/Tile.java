@@ -37,7 +37,7 @@
 
 package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
+import org.mozilla.fennec.gfx.CairoImage;
 import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -97,7 +97,7 @@ public class Tile {
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
     }
 
-    public void setImage(GL10 gl, SharedImageShmem newImage) {
+    public void setImage(GL10 gl, CairoImage newImage) {
         // Assert that the image has a power-of-two size. Phones tend not to support NPOT textures,
         // and OpenGL ES doesn't seem to let us efficiently slice up a NPOT bitmap.
         assert (newImage.width & (newImage.width - 1)) == 0;
@@ -125,13 +125,13 @@ public class Tile {
 
     private static int cairoFormatToGLInternalFormat(int cairoFormat) {
         switch (cairoFormat) {
-        case SharedImageShmem.FORMAT_ARGB32:
+        case CairoImage.FORMAT_ARGB32:
             return GL10.GL_RGBA;
-        case SharedImageShmem.FORMAT_RGB24:
-        case SharedImageShmem.FORMAT_RGB16_565:
+        case CairoImage.FORMAT_RGB24:
+        case CairoImage.FORMAT_RGB16_565:
             return GL10.GL_RGB;
-        case SharedImageShmem.FORMAT_A8:
-        case SharedImageShmem.FORMAT_A1:
+        case CairoImage.FORMAT_A8:
+        case CairoImage.FORMAT_A1:
             throw new RuntimeException("Cairo FORMAT_A1 and FORMAT_A8 unsupported");
         default:
             throw new RuntimeException("Unknown Cairo format");
@@ -140,13 +140,13 @@ public class Tile {
 
     private static int cairoFormatToGLFormat(int cairoFormat) {
         switch (cairoFormat) {
-        case SharedImageShmem.FORMAT_ARGB32:
+        case CairoImage.FORMAT_ARGB32:
             return GL10.GL_RGBA;
-        case SharedImageShmem.FORMAT_RGB24:
-        case SharedImageShmem.FORMAT_RGB16_565:
+        case CairoImage.FORMAT_RGB24:
+        case CairoImage.FORMAT_RGB16_565:
             return GL10.GL_RGB;
-        case SharedImageShmem.FORMAT_A8:
-        case SharedImageShmem.FORMAT_A1:
+        case CairoImage.FORMAT_A8:
+        case CairoImage.FORMAT_A1:
             return GL10.GL_ALPHA;
         default:
             throw new RuntimeException("Unknown Cairo format");
@@ -155,13 +155,13 @@ public class Tile {
 
     private static int cairoFormatToGLType(int cairoFormat) {
         switch (cairoFormat) {
-        case SharedImageShmem.FORMAT_ARGB32:
-        case SharedImageShmem.FORMAT_RGB24:
-        case SharedImageShmem.FORMAT_A8:
+        case CairoImage.FORMAT_ARGB32:
+        case CairoImage.FORMAT_RGB24:
+        case CairoImage.FORMAT_A8:
             return GL10.GL_UNSIGNED_BYTE;
-        case SharedImageShmem.FORMAT_A1:
+        case CairoImage.FORMAT_A1:
             throw new RuntimeException("Cairo FORMAT_A1 unsupported in Android OpenGL");
-        case SharedImageShmem.FORMAT_RGB16_565:
+        case CairoImage.FORMAT_RGB16_565:
             return GL10.GL_UNSIGNED_SHORT_5_6_5;
         default:
             throw new RuntimeException("Unknown Cairo format");
@@ -170,11 +170,11 @@ public class Tile {
 
     private static int bytesForPixelsInCairoFormat(int cairoFormat, int nPixels) {
         switch (cairoFormat) {
-        case SharedImageShmem.FORMAT_ARGB32:    return nPixels * 4;
-        case SharedImageShmem.FORMAT_RGB24:     return nPixels * 3;
-        case SharedImageShmem.FORMAT_A8:        return nPixels;
-        case SharedImageShmem.FORMAT_A1:        return nPixels / 8;
-        case SharedImageShmem.FORMAT_RGB16_565: return nPixels * 2;
+        case CairoImage.FORMAT_ARGB32:      return nPixels * 4;
+        case CairoImage.FORMAT_RGB24:       return nPixels * 3;
+        case CairoImage.FORMAT_A8:          return nPixels;
+        case CairoImage.FORMAT_A1:          return nPixels / 8;
+        case CairoImage.FORMAT_RGB16_565:   return nPixels * 2;
         default:
             throw new RuntimeException("Unknown Cairo format");
         }

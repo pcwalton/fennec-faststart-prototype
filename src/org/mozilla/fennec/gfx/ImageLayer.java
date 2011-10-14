@@ -37,17 +37,15 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.Layer;
 import org.mozilla.fennec.gfx.Tile;
-import org.mozilla.fennec.ipdl.PLayers.SharedImage;
-import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
-import org.mozilla.fennec.ipdl.PLayers.SurfaceDescriptor;
 import android.app.Activity;
 import android.util.Log;
 import javax.microedition.khronos.opengles.GL10;
 
 public class ImageLayer extends Layer {
-    private SharedImageShmem mShmem;
+    private CairoImage mImage;
     private boolean mSurfaceDirty;
     private Activity mActivity;
     private Tile mTile;
@@ -64,19 +62,18 @@ public class ImageLayer extends Layer {
     }
 
     private void retileIfNecessary(GL10 gl) {
-        if (!mSurfaceDirty || mShmem == null)
+        if (!mSurfaceDirty || mImage == null)
             return;
 
-        Log.e("Fennec", "Retiling, width=" + mShmem.width + ", height=" + mShmem.height +
-              ", format=" + mShmem.format);
-        mTile.setImage(gl, mShmem);
+        Log.e("Fennec", "Retiling, width=" + mImage.width + ", height=" + mImage.height +
+              ", format=" + mImage.format);
+        mTile.setImage(gl, mImage);
         mSurfaceDirty = false;
     }
     
-    public void paintImage(SharedImage image) {
-        SharedImageShmem shmem = ((SurfaceDescriptor)image).shmem;
-        if (mShmem != shmem) {
-            mShmem = shmem;
+    public void paintImage(CairoImage image) {
+        if (mImage != image) {
+            mImage = image;
             mSurfaceDirty = true;
         }
     }

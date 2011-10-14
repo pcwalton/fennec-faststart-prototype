@@ -37,12 +37,10 @@
 
 package org.mozilla.fennec;
 
+import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.GeckoRenderer;
+import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.ipdl.PLayer;
-import org.mozilla.fennec.ipdl.PLayers;
-import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
-import org.mozilla.fennec.ipdl.PLayers.SurfaceDescriptor;
 import org.mozilla.fennecfaststart.R;
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -55,13 +53,13 @@ import java.nio.ByteBuffer;
  * layer manager. We use this as a placeholder until Gecko is up.
  */
 public class StaticImageLayerClient {
-    private class ClientLayer extends PLayer {}
-
+    private Activity mActivity;
     private LayerController mLayerController;
     private int mWidth, mHeight, mFormat;
     private ByteBuffer mBuffer;
 
     public StaticImageLayerClient(Activity activity, LayerController layerController) {
+        mActivity = activity;
         mLayerController = layerController;
 
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -79,21 +77,9 @@ public class StaticImageLayerClient {
     }
 
     public void init() {
-        PLayer pLayer = new ClientLayer();
-
-        mLayerController.createImageLayer(pLayer);
-        mLayerController.setRoot(pLayer);
-
-        SharedImageShmem sharedImageShmem = new SharedImageShmem();
-        sharedImageShmem.buffer = mBuffer;
-        sharedImageShmem.width = mWidth;
-        sharedImageShmem.height = mHeight;
-        sharedImageShmem.format = mFormat;
-
-        SurfaceDescriptor surfaceDescriptor = new SurfaceDescriptor();
-        surfaceDescriptor.shmem = sharedImageShmem;
-
-        mLayerController.paintImage(pLayer, surfaceDescriptor);
+        ImageLayer imageLayer = new ImageLayer(mActivity);
+        mLayerController.setRoot(imageLayer);
+        imageLayer.paintImage(new CairoImage(mBuffer, mWidth, mHeight, mFormat));
     }
 }
 

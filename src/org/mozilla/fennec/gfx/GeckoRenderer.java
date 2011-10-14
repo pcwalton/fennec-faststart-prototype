@@ -39,7 +39,6 @@ package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.gfx.Tile;
-import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
 import org.mozilla.fennec.ipdl.nsIntRect;
 import org.mozilla.fennec.ipdl.nsIntSize;
 import android.graphics.Bitmap;
@@ -127,20 +126,17 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         ByteBuffer backgroundBitmapByteBuffer = ByteBuffer.allocateDirect(width * height * 4);
         backgroundBitmap.copyPixelsToBuffer(backgroundBitmapByteBuffer.asIntBuffer());
 
-        SharedImageShmem backgroundImageShmem = new SharedImageShmem();
-        backgroundImageShmem.buffer = backgroundBitmapByteBuffer;
-        backgroundImageShmem.width = width;
-        backgroundImageShmem.height = height;
-        backgroundImageShmem.format = cairoFormat;
-        mBackgroundTile.setImage(gl, backgroundImageShmem);
+        CairoImage backgroundImage = new CairoImage(backgroundBitmapByteBuffer, width, height,
+                                                    cairoFormat);
+        mBackgroundTile.setImage(gl, backgroundImage);
     }
 
     public static int bitmapConfigToCairoFormat(Bitmap.Config config) {
         switch (config) {
-        case ALPHA_8:   return SharedImageShmem.FORMAT_A8;
+        case ALPHA_8:   return CairoImage.FORMAT_A8;
         case ARGB_4444: throw new RuntimeException("ARGB_444 unsupported");
-        case ARGB_8888: return SharedImageShmem.FORMAT_ARGB32;
-        case RGB_565:   return SharedImageShmem.FORMAT_RGB16_565;
+        case ARGB_8888: return CairoImage.FORMAT_ARGB32;
+        case RGB_565:   return CairoImage.FORMAT_RGB16_565;
         default:        throw new RuntimeException("Unknown Skia bitmap config");
         }
     }

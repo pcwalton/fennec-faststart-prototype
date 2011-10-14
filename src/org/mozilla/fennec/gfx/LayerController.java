@@ -41,13 +41,6 @@ import org.mozilla.fennecfaststart.R;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.Layer;
-import org.mozilla.fennec.ipdl.PLayer;
-import org.mozilla.fennec.ipdl.PLayers;
-import org.mozilla.fennec.ipdl.PLayers.Edit;
-import org.mozilla.fennec.ipdl.PLayers.EditReply;
-import org.mozilla.fennec.ipdl.PLayers.OpCreateImageLayer;
-import org.mozilla.fennec.ipdl.PLayers.OpPaintImage;
-import org.mozilla.fennec.ipdl.PLayers.SharedImage;
 import org.mozilla.fennec.ipdl.nsIntRect;
 import org.mozilla.fennec.ipdl.nsIntSize;
 import org.mozilla.fennec.ui.PanZoomController;
@@ -64,8 +57,6 @@ import java.util.HashMap;
  * natively by delegating to a panning/zooming controller.
  */
 public class LayerController implements ScaleGestureDetector.OnScaleGestureListener {
-    // A mapping from each client shadow layer to the layer on our side.
-    private HashMap<PLayer,Layer> mShadowLayers;
     // The root layer.
     private Layer mRootLayer;
     // The main Gecko rendering view.
@@ -83,7 +74,6 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     private PanZoomController mPanZoomController;
 
     public LayerController(Activity activity) {
-        mShadowLayers = new HashMap<PLayer,Layer>();
         mGeckoView = new GeckoView(activity, this);
         mActivity = activity;
         mPageSize = new nsIntSize(970, 1024);       // TODO: Make this real.
@@ -96,23 +86,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
      * Editing operations
      */
 
-    public void createImageLayer(PLayer layer) {
-        assert (!mShadowLayers.containsKey(layer));
-        mShadowLayers.put(layer, new ImageLayer(mActivity));
-    }
-
-    public void setRoot(PLayer layer) {
-        assert (mShadowLayers.containsKey(layer));
-        mRootLayer = mShadowLayers.get(layer);
-    }
-
-    public void paintImage(PLayer layer, SharedImage image) {
-        assert (mShadowLayers.containsKey(layer));
-        assert (mShadowLayers.get(layer) instanceof ImageLayer);
-
-        ImageLayer imageLayer = (ImageLayer)mShadowLayers.get(layer);
-        imageLayer.paintImage(image);
-    }
+    public void setRoot(Layer layer) { mRootLayer = layer; }
 
     public Layer getRoot() { return mRootLayer; }
     public GeckoView getView() { return mGeckoView; }
