@@ -88,5 +88,7 @@ public class MainUIController {
     }
 
     public View getOuterView() { return outerView; }
+
+    public void start() { /* TODO */ }
 }
 

@@ -38,12 +38,9 @@
 package org.mozilla.fennec;
 
 import org.mozilla.fennec.gfx.GeckoRenderer;
+import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.ipdl.PLayer;
 import org.mozilla.fennec.ipdl.PLayers;
-import org.mozilla.fennec.ipdl.PLayers.Edit;
-import org.mozilla.fennec.ipdl.PLayers.OpCreateImageLayer;
-import org.mozilla.fennec.ipdl.PLayers.OpPaintImage;
-import org.mozilla.fennec.ipdl.PLayers.OpSetRoot;
 import org.mozilla.fennec.ipdl.PLayers.SharedImageShmem;
 import org.mozilla.fennec.ipdl.PLayers.SurfaceDescriptor;
 import org.mozilla.fennecfaststart.R;
@@ -60,12 +57,12 @@ import java.nio.ByteBuffer;
 public class StaticImageLayerClient {
     private class ClientLayer extends PLayer {}
 
-    private PLayers mLayerManager;
+    private LayerController mLayerController;
     private int mWidth, mHeight, mFormat;
     private ByteBuffer mBuffer;
 
-    public StaticImageLayerClient(Activity activity, PLayers layerManager) {
-        mLayerManager = layerManager;
+    public StaticImageLayerClient(Activity activity, LayerController layerController) {
+        mLayerController = layerController;
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
@@ -82,31 +79,21 @@ public class StaticImageLayerClient {
     }
 
     public void init() {
-        Edit[] changeset = new Edit[3];
         PLayer pLayer = new ClientLayer();
 
-        OpCreateImageLayer opCreateImageLayer = new OpCreateImageLayer();
-        opCreateImageLayer.layer = pLayer;
-        changeset[0] = opCreateImageLayer;
+        mLayerController.createImageLayer(pLayer);
+        mLayerController.setRoot(pLayer);
 
-        OpSetRoot opSetRoot = new OpSetRoot();
-        opSetRoot.root = pLayer;
-        changeset[1] = opSetRoot;
-
-        OpPaintImage opPaintImage = new OpPaintImage();
-        opPaintImage.layer = pLayer;
         SharedImageShmem sharedImageShmem = new SharedImageShmem();
         sharedImageShmem.buffer = mBuffer;
         sharedImageShmem.width = mWidth;
         sharedImageShmem.height = mHeight;
         sharedImageShmem.format = mFormat;
-        Log.e("Fennec", "Format is " + mFormat + " width " + mWidth + " height " + mHeight);
-        SurfaceDescriptor newFrontBuffer = new SurfaceDescriptor();
-        newFrontBuffer.shmem = sharedImageShmem;
-        opPaintImage.newFrontBuffer = newFrontBuffer;
-        changeset[2] = opPaintImage;
 
-        mLayerManager.update(changeset);
+        SurfaceDescriptor surfaceDescriptor = new SurfaceDescriptor();
+        surfaceDescriptor.shmem = sharedImageShmem;
+
+        mLayerController.paintImage(pLayer, surfaceDescriptor);
     }
 }
 

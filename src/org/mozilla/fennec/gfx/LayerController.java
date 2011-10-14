@@ -60,10 +60,10 @@ import android.view.ScaleGestureDetector;
 import java.util.HashMap;
 
 /*
- * A Java layer manager implementing the PLayers protocol. Does panning and zooming natively by
- * delegating to a panning/zooming controller so that the UI is usable before Gecko is up.
+ * The layer controller manages a tile that represents the visible page. It does panning and zooming
+ * natively by delegating to a panning/zooming controller.
  */
-public class LayerController extends PLayers implements ScaleGestureDetector.OnScaleGestureListener {
+public class LayerController implements ScaleGestureDetector.OnScaleGestureListener {
     // A mapping from each client shadow layer to the layer on our side.
     private HashMap<PLayer,Layer> mShadowLayers;
     // The root layer.
@@ -96,44 +96,22 @@ public class LayerController extends PLayers implements ScaleGestureDetector.OnS
      * Editing operations
      */
 
-    private EditReply createImageLayer(PLayer layer) {
+    public void createImageLayer(PLayer layer) {
         assert (!mShadowLayers.containsKey(layer));
         mShadowLayers.put(layer, new ImageLayer(mActivity));
-        return null;
     }
 
-    private EditReply setRoot(PLayer layer) {
+    public void setRoot(PLayer layer) {
         assert (mShadowLayers.containsKey(layer));
         mRootLayer = mShadowLayers.get(layer);
-        return null;
     }
 
-    private EditReply paintImage(PLayer layer, SharedImage image) {
+    public void paintImage(PLayer layer, SharedImage image) {
         assert (mShadowLayers.containsKey(layer));
         assert (mShadowLayers.get(layer) instanceof ImageLayer);
 
         ImageLayer imageLayer = (ImageLayer)mShadowLayers.get(layer);
         imageLayer.paintImage(image);
-        return null;
-    }
-
-    public EditReply[] update(Edit[] cset) {
-        EditReply[] replies = new EditReply[cset.length];
-        for (int i = 0; i < cset.length; i++) {
-            // TODO: Might want to use a hash table on Java Class objects here or something.
-            Edit edit = cset[i];
-            if (edit instanceof OpCreateImageLayer) {
-                replies[i] = createImageLayer(((OpCreateImageLayer)edit).layer);
-            } else if (edit instanceof OpSetRoot) {
-                replies[i] = setRoot(((OpSetRoot)edit).root);
-            } else if (edit instanceof OpPaintImage) {
-                OpPaintImage op = (OpPaintImage)edit;
-                replies[i] = paintImage(op.layer, op.newFrontBuffer);
-            } else {
-                Log.e("Fennec", "unimplemented layer edit");
-            }
-        }
-        return replies;
     }
 
     public Layer getRoot() { return mRootLayer; }
