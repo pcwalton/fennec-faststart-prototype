@@ -10,6 +10,7 @@ public class FennecFaststartActivity extends Activity {
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
         MainUIController controller = new MainUIController(this);
         setContentView(controller.getOuterView());
         controller.start();

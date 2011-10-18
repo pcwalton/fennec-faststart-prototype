@@ -35,59 +35,32 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec;
+package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennec.StaticImageLayerClient;
-import org.mozilla.fennec.gfx.GeckoView;
+import org.mozilla.fennec.gfx.IntRect;
+import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
-import android.app.Activity;
-import android.content.Context;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 
-public class MainUIController {
-    private Activity mActivity;
-    //private SurfaceTestController mController;
-    private View outerView;
+/**
+ * A layer client provides tiles and manages other information used by the layer controller.
+ */
+public abstract class LayerClient {
+    private LayerController mLayerController;
+    private float mZoomFactor;
 
-    public MainUIController(Activity activity) {
-        mActivity = activity;
-        build();
+    public abstract IntSize getPageSize();
+    public abstract void onVisibleRectChanged(IntRect visibleRect);
+    public abstract void onZoomFactorChanged(float zoomFactor);
+
+    public LayerController getLayerController() { return mLayerController; }
+    public void setLayerController(LayerController layerController) {
+        mLayerController = layerController;
     }
 
-    public Context getContext() { return mActivity; }
-
-    /* Constructs the UI. */
-    private void build() {
-        mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        AwesomeBarController awesomeBarController =
-            new AwesomeBarController(this);
-
-        StaticImageLayerClient staticImageLayerClient = new StaticImageLayerClient(mActivity);
-        LayerController layerController = new LayerController(mActivity, staticImageLayerClient);
-        staticImageLayerClient.init();
-
-        View contentView = layerController.getView();
-        LinearLayout.LayoutParams contentViewLayout =
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                                          ViewGroup.LayoutParams.FILL_PARENT);
-        contentViewLayout.weight = 1.0f;
-        contentView.setLayoutParams(contentViewLayout);
-
-        LinearLayout outerLayout = new LinearLayout(mActivity);
-        outerLayout.setOrientation(LinearLayout.VERTICAL);
-        outerLayout.addView(awesomeBarController.getAwesomeBar());
-        outerLayout.addView(contentView);
-
-        outerView = outerLayout;
+    public float getZoomFactor() { return mZoomFactor; }
+    public void setZoomFactor(float zoomFactor) {
+        mZoomFactor = zoomFactor;
+        onZoomFactorChanged(zoomFactor);
     }
-
-    public View getOuterView() { return outerView; }
-
-    public void start() { /* TODO */ }
 }
 

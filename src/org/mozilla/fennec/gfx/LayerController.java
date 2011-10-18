@@ -42,6 +42,7 @@ import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
+import org.mozilla.fennec.gfx.LayerClient;
 import org.mozilla.fennec.ui.PanZoomController;
 import android.content.Context;
 import android.content.res.Resources;
@@ -59,47 +60,45 @@ import java.util.HashMap;
  * to a higher-level view.
  */
 public class LayerController implements ScaleGestureDetector.OnScaleGestureListener {
-    // The root layer.
-    private Layer mRootLayer;
-    // The main Gecko rendering view.
-    private GeckoView mGeckoView;
-    // The current context.
-    private Context mContext;
-    // The current page size in pixels.
-    private IntSize mPageSize;
-    // The current visible region.
-    private IntRect mVisibleRect;
-    // The natural size of the visible region, without any zoom applied.
+    private Layer mRootLayer;                   /* The root layer. */
+    private GeckoView mGeckoView;               /* The main Gecko rendering view. */
+    private Context mContext;                   /* The current context. */
+    private IntRect mVisibleRect;               /* The current visible region. */
     private IntSize mNaturalViewportSize;
-    // The panning and zooming controller, which interprets pan and zoom gestures for us and
-    // updates our visible rect appropriately.
+    /* The natural size of the visible region, without any zoom applied. */
+
     private PanZoomController mPanZoomController;
-    // The touch listener.
-    private OnTouchListener mOnTouchListener;
+    /*
+     * The panning and zooming controller, which interprets pan and zoom gestures for us and
+     * updates our visible rect appropriately.
+     */
+
+    private OnTouchListener mOnTouchListener;   /* The touch listener. */
+    private LayerClient mLayerClient;           /* The layer client. */
 
     public static final int TILE_SIZE = 1024;
 
-    public LayerController(Context context) {
+    public LayerController(Context context, LayerClient layerClient) {
+        mLayerClient = layerClient;
+        layerClient.setLayerController(this);
+
         mGeckoView = new GeckoView(context, this);
         mContext = context;
-        mPageSize = new IntSize(TILE_SIZE, TILE_SIZE);  // TODO: Make this real.
-        mVisibleRect = new IntRect(0, 0, 1, 1);         // Gets filled in when the surface changes.
+        mVisibleRect = new IntRect(0, 0, 1, 1);     /* Gets filled in when the surface changes. */
         mNaturalViewportSize = new IntSize(1, 1);
         mPanZoomController = new PanZoomController(this);
     }
 
-    /*
-     * Editing operations
-     */
-
     public void setRoot(Layer layer) { mRootLayer = layer; }
+    public void setLayerClient(LayerClient layerClient) { mLayerClient = layerClient; }
 
     public Layer getRoot() { return mRootLayer; }
     public GeckoView getView() { return mGeckoView; }
     public Context getContext() { return mContext; }
-    public IntSize getPageSize() { return mPageSize; }
     public IntRect getVisibleRect() { return mVisibleRect; }
     public IntSize getNaturalViewportSize() { return mNaturalViewportSize; }
+
+    public IntSize getPageSize() { return mLayerClient.getPageSize(); }
 
     public Bitmap getBackgroundPattern() {
         Resources resources = mContext.getResources();
@@ -109,6 +108,10 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         return BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
     }
 
+    /*
+     * Note that the zoom factor of the layer controller differs from the zoom factor of the layer
+     * client (i.e. the page).
+     */
     public float getZoomFactor() {
         return (float)mNaturalViewportSize.width / (float)mVisibleRect.width;
     }
@@ -118,6 +121,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         mNaturalViewportSize.width = newWidth; mNaturalViewportSize.height = newHeight;
         mVisibleRect.width = (int)Math.round((float)newWidth / zoomFactor);
         mVisibleRect.height = (int)Math.round((float)newHeight / zoomFactor);
+        mLayerClient.onZoomFactorChanged(zoomFactor);
     }
 
     public void setNeedsDisplay() {

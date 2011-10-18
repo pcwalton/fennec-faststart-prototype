@@ -40,6 +40,9 @@ package org.mozilla.fennec;
 import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.GeckoRenderer;
 import org.mozilla.fennec.gfx.ImageLayer;
+import org.mozilla.fennec.gfx.IntRect;
+import org.mozilla.fennec.gfx.IntSize;
+import org.mozilla.fennec.gfx.LayerClient;
 import org.mozilla.fennec.gfx.LayerController;
 import android.content.Context;
 import android.content.res.Resources;
@@ -52,15 +55,13 @@ import java.nio.ByteBuffer;
  * A stand-in for Gecko that renders a static image (cached content of the previous page) using the
  * layer manager. We use this as a placeholder until Gecko is up.
  */
-public class StaticImageLayerClient {
+public class StaticImageLayerClient extends LayerClient {
     private Context mContext;
-    private LayerController mLayerController;
     private int mWidth, mHeight, mFormat;
     private ByteBuffer mBuffer;
 
-    public StaticImageLayerClient(Context context, LayerController layerController) {
+    public StaticImageLayerClient(Context context) {
         mContext = context;
-        mLayerController = layerController;
 
         Resources resources = context.getResources();
         int resourceID = resources.getIdentifier("page", "drawable", mContext.getPackageName());
@@ -77,10 +78,18 @@ public class StaticImageLayerClient {
         Log.e("Fennec", "Static image layer client uploaded");
     }
 
+    /* Call this only after this client is hooked up to the layer controller. */
     public void init() {
         ImageLayer imageLayer = new ImageLayer();
-        mLayerController.setRoot(imageLayer);
+        getLayerController().setRoot(imageLayer);
         imageLayer.paintImage(new CairoImage(mBuffer, mWidth, mHeight, mFormat));
     }
+
+    @Override
+    public IntSize getPageSize() { return new IntSize(995, 1250); }
+    @Override
+    public void onVisibleRectChanged(IntRect visibleRect) { /* no-op */ }
+    @Override
+    public void onZoomFactorChanged(float zoomFactor) { /* no-op */ }
 }
 
