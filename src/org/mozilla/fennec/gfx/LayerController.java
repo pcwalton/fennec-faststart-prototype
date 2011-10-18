@@ -50,11 +50,13 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.View.OnTouchListener;
 import java.util.HashMap;
 
 /*
- * The layer controller manages a tile that represents the visible page. It does panning and zooming
- * natively by delegating to a panning/zooming controller.
+ * The layer controller manages a tile that represents the visible page. It does panning and
+ * zooming natively by delegating to a panning/zooming controller. Touch events can be dispatched
+ * to a higher-level view.
  */
 public class LayerController implements ScaleGestureDetector.OnScaleGestureListener {
     // The root layer.
@@ -72,12 +74,16 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     // The panning and zooming controller, which interprets pan and zoom gestures for us and
     // updates our visible rect appropriately.
     private PanZoomController mPanZoomController;
+    // The touch listener.
+    private OnTouchListener mOnTouchListener;
+
+    public static final int TILE_SIZE = 1024;
 
     public LayerController(Context context) {
         mGeckoView = new GeckoView(context, this);
         mContext = context;
-        mPageSize = new IntSize(970, 1024);       // TODO: Make this real.
-        mVisibleRect = new IntRect(0, 0, 1, 1);   // Gets filled in when the surface changes.
+        mPageSize = new IntSize(TILE_SIZE, TILE_SIZE);  // TODO: Make this real.
+        mVisibleRect = new IntRect(0, 0, 1, 1);         // Gets filled in when the surface changes.
         mNaturalViewportSize = new IntSize(1, 1);
         mPanZoomController = new PanZoomController(this);
     }
@@ -131,13 +137,20 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
 
     public boolean post(Runnable action) { return mGeckoView.post(action); }
 
+    public void setOnTouchListener(OnTouchListener onTouchListener) {
+        mOnTouchListener = onTouchListener;
+    }
+
     /*
      * Gesture detection. This is handled only at a high level in this class; we dispatch to the
      * pan/zoom controller to do the dirty work.
      */
 
     public boolean onTouchEvent(MotionEvent event) {
-        return mPanZoomController.onTouchEvent(event);
+        boolean result = mPanZoomController.onTouchEvent(event);
+        if (mOnTouchListener != null)
+            result = mOnTouchListener.onTouch(mGeckoView, event) || result;
+        return result;
     }
 
     @Override

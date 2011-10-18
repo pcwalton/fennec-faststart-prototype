@@ -55,16 +55,13 @@ public class ImageLayer extends Layer {
     }
 
     public void draw(GL10 gl) {
-        retileIfNecessary(gl);
+        recreateTileIfNecessary(gl);
         mTile.draw(gl);
     }
 
-    private void retileIfNecessary(GL10 gl) {
+    private void recreateTileIfNecessary(GL10 gl) {
         if (!mSurfaceDirty || mImage == null)
             return;
-
-        Log.e("Fennec", "Retiling, width=" + mImage.width + ", height=" + mImage.height +
-              ", format=" + mImage.format);
         mTile.setImage(gl, mImage);
         mSurfaceDirty = false;
     }

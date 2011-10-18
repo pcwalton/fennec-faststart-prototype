@@ -52,6 +52,7 @@ public class Tile {
     private FloatBuffer mVertexBuffer, mTexCoordBuffer;
     private int[] mTextureIDs;
     private int mWidth, mHeight;
+    private boolean mHasValidImage;
 
     private static final float[] VERTICES = {
         0.0f, 0.0f, 0.0f,
@@ -68,6 +69,8 @@ public class Tile {
     };
 
     public Tile() {
+        mHasValidImage = false;
+
         ByteBuffer vertexBuffer = ByteBuffer.allocateDirect(VERTICES.length * 4);
         vertexBuffer.order(ByteOrder.nativeOrder());
         mVertexBuffer = vertexBuffer.asFloatBuffer();
@@ -82,6 +85,9 @@ public class Tile {
     }
 
     public void draw(GL10 gl) {
+        if (!mHasValidImage)
+            return;
+
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
         gl.glPushMatrix();
@@ -103,8 +109,10 @@ public class Tile {
         assert (newImage.width & (newImage.width - 1)) == 0;
         assert (newImage.height & (newImage.height - 1)) == 0;
 
-        mTextureIDs = new int[1];
-        gl.glGenTextures(mTextureIDs.length, mTextureIDs, 0);
+        if (mTextureIDs == null) {
+            mTextureIDs = new int[1];
+            gl.glGenTextures(mTextureIDs.length, mTextureIDs, 0);
+        }
 
         mWidth = newImage.width; mHeight = newImage.height;
 
@@ -116,11 +124,12 @@ public class Tile {
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
 
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mWidth, mHeight, 0, format, type,
                         newImage.buffer);
-        Log.e("Fennec", "glTexImage2D() error == " + gl.glGetError());
+
+        mHasValidImage = true;
     }
 
     private static int cairoFormatToGLInternalFormat(int cairoFormat) {
