@@ -37,9 +37,16 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.IntPoint;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Layer {
+    public IntPoint origin;
+
+    public Layer() {
+        origin = new IntPoint(0, 0);
+    }
+
     public abstract void draw(GL10 gl);
 }
 

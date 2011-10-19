@@ -50,13 +50,18 @@ public class ImageLayer extends Layer {
     private Tile mTile;
 
     public ImageLayer() {
+        super();
         mSurfaceDirty = true;
         mTile = new Tile();
     }
 
     public void draw(GL10 gl) {
         recreateTileIfNecessary(gl);
+
+        gl.glPushMatrix();
+        gl.glTranslatef(origin.x, origin.y, 0.0f);
         mTile.draw(gl);
+        gl.glPopMatrix();
     }
 
     private void recreateTileIfNecessary(GL10 gl) {

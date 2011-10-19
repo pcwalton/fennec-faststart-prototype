@@ -37,8 +37,10 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.IntPoint;
+
 public class IntRect implements Cloneable {
-    public int x, y, width, height;
+    public final int x, y, width, height;
 
     public IntRect(int inX, int inY, int inWidth, int inHeight) {
         x = inX; y = inY; width = inWidth; height = inHeight;
@@ -46,6 +48,8 @@ public class IntRect implements Cloneable {
 
     @Override
     public Object clone() { return new IntRect(x, y, width, height); }
+
+    public IntPoint getOrigin() { return new IntPoint(x, y); }
 }
 
 

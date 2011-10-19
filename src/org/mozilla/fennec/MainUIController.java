@@ -37,6 +37,7 @@
 
 package org.mozilla.fennec;
 
+import org.mozilla.fennec.FakeGeckoLayerClient;
 import org.mozilla.fennec.StaticImageLayerClient;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.LayerController;
@@ -67,9 +68,13 @@ public class MainUIController {
         AwesomeBarController awesomeBarController =
             new AwesomeBarController(this);
 
-        StaticImageLayerClient staticImageLayerClient = new StaticImageLayerClient(mActivity);
+        /*StaticImageLayerClient staticImageLayerClient = new StaticImageLayerClient(mActivity);
         LayerController layerController = new LayerController(mActivity, staticImageLayerClient);
-        staticImageLayerClient.init();
+        staticImageLayerClient.init();*/
+
+        FakeGeckoLayerClient geckoLayerClient = new FakeGeckoLayerClient();
+        LayerController layerController = new LayerController(mActivity, geckoLayerClient);
+        geckoLayerClient.init();
 
         View contentView = layerController.getView();
         LinearLayout.LayoutParams contentViewLayout =

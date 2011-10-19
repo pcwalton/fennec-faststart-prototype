@@ -117,10 +117,14 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     }
 
     public void onViewportSizeChanged(int newWidth, int newHeight) {
-        float zoomFactor = getZoomFactor();
-        mNaturalViewportSize.width = newWidth; mNaturalViewportSize.height = newHeight;
-        mVisibleRect.width = (int)Math.round((float)newWidth / zoomFactor);
-        mVisibleRect.height = (int)Math.round((float)newHeight / zoomFactor);
+        float zoomFactor = getZoomFactor();     /* Must come first. */
+
+        mNaturalViewportSize = new IntSize(newWidth, newHeight);
+
+        setVisibleRect(mVisibleRect.x, mVisibleRect.y,
+                       (int)Math.round((float)newWidth / zoomFactor),
+                       (int)Math.round((float)newHeight / zoomFactor));
+
         mLayerClient.onZoomFactorChanged(zoomFactor);
     }
 
@@ -129,13 +133,12 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     }
 
     public void scrollTo(int x, int y) {
-        mVisibleRect.x = x; mVisibleRect.y = y;
-        setNeedsDisplay();
+        setVisibleRect(x, y, mVisibleRect.width, mVisibleRect.height);
     }
 
     public void setVisibleRect(int x, int y, int width, int height) {
-        mVisibleRect.x = x; mVisibleRect.y = y;
-        mVisibleRect.width = width; mVisibleRect.height = height;
+        mVisibleRect = new IntRect(x, y, width, height);
+        mLayerClient.onVisibleRectChanged(mVisibleRect);
         setNeedsDisplay();
     }
 

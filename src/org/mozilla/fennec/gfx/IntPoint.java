@@ -37,9 +37,10 @@
 
 package org.mozilla.fennec.gfx;
 
-public class IntSize {
-    public final int width, height;
+public class IntPoint {
+    public final int x, y;
 
-    public IntSize(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
+    public IntPoint(int inX, int inY) { x = inX; y = inY; }
 }
+
 

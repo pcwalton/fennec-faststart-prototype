@@ -35,11 +35,21 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.fennec.ui;
 
-public class IntSize {
-    public final int width, height;
+import org.mozilla.fennec.gfx.IntRect;
+import org.mozilla.fennec.gfx.IntSize;
+import org.mozilla.fennec.gfx.LayerController;
 
-    public IntSize(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
+/* Manages the dimensions of the page viewport. */
+public class ViewportController {
+    public IntRect visibleRect;
+    public IntSize pageSize;
+
+    public IntRect getViewportRect() {
+        int x = Math.max(0, Math.min(visibleRect.x, pageSize.width - visibleRect.width));
+        int y = Math.max(0, Math.min(visibleRect.y, pageSize.height - visibleRect.height));
+        return new IntRect(x, y, visibleRect.width, visibleRect.height);
+    }
 }
 
