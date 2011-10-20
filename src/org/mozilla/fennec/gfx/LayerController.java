@@ -64,8 +64,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     private GeckoView mGeckoView;               /* The main Gecko rendering view. */
     private Context mContext;                   /* The current context. */
     private IntRect mVisibleRect;               /* The current visible region. */
-    private IntSize mNaturalViewportSize;
-    /* The natural size of the visible region, without any zoom applied. */
+    private IntSize mScreenSize;                /* The screen size of the viewport. */
 
     private PanZoomController mPanZoomController;
     /*
@@ -85,7 +84,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         mGeckoView = new GeckoView(context, this);
         mContext = context;
         mVisibleRect = new IntRect(0, 0, 1, 1);     /* Gets filled in when the surface changes. */
-        mNaturalViewportSize = new IntSize(1, 1);
+        mScreenSize = new IntSize(1, 1);
         mPanZoomController = new PanZoomController(this);
     }
 
@@ -96,7 +95,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public GeckoView getView() { return mGeckoView; }
     public Context getContext() { return mContext; }
     public IntRect getVisibleRect() { return mVisibleRect; }
-    public IntSize getNaturalViewportSize() { return mNaturalViewportSize; }
+    public IntSize getScreenSize() { return mScreenSize; }
 
     public IntSize getPageSize() { return mLayerClient.getPageSize(); }
 
@@ -108,18 +107,25 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         return BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
     }
 
+    public Bitmap getCheckerboardPattern() {
+        Resources resources = mContext.getResources();
+        int resourceID = resources.getIdentifier("checkerboard", "drawable",
+                                                 mContext.getPackageName());
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        return BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
+    }
+
     /*
      * Note that the zoom factor of the layer controller differs from the zoom factor of the layer
      * client (i.e. the page).
      */
-    public float getZoomFactor() {
-        return (float)mNaturalViewportSize.width / (float)mVisibleRect.width;
-    }
+    public float getZoomFactor() { return (float)mScreenSize.width / (float)mVisibleRect.width; }
 
     public void onViewportSizeChanged(int newWidth, int newHeight) {
         float zoomFactor = getZoomFactor();     /* Must come first. */
 
-        mNaturalViewportSize = new IntSize(newWidth, newHeight);
+        mScreenSize = new IntSize(newWidth, newHeight);
 
         setVisibleRect(mVisibleRect.x, mVisibleRect.y,
                        (int)Math.round((float)newWidth / zoomFactor),

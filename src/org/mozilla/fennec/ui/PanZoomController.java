@@ -168,7 +168,7 @@ public class PanZoomController {
     private void populatePositionAndLength() {
         IntSize pageSize = mController.getPageSize();
         IntRect visibleRect = mController.getVisibleRect();
-        IntSize naturalViewportSize = mController.getNaturalViewportSize();
+        IntSize screenSize = mController.getScreenSize();
 
         mX.setPageLength(pageSize.width);
         mX.viewportPos = visibleRect.x;
@@ -418,7 +418,7 @@ public class PanZoomController {
 
     // FIXME: This is ridiculously wrong.
     public boolean onScale(ScaleGestureDetector detector) {
-        IntSize naturalViewportSize = mController.getNaturalViewportSize();
+        IntSize screenSize = mController.getScreenSize();
         float newFactor = detector.getCurrentSpan() / mInitialZoomSpan;
 
         float width = mInitialZoomRect.width / newFactor;

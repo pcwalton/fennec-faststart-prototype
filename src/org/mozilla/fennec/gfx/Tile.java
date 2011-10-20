@@ -38,21 +38,23 @@
 package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.CairoImage;
+import org.mozilla.fennec.gfx.IntSize;
+import org.mozilla.fennec.gfx.LayerController;
 import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import javax.microedition.khronos.opengles.GL10;
 
-/*
- * Encapsulates the logic needed to draw a textured tile in OpenGL. This is used for the background
- * and ImageLayers and should eventually be useful for ThebesLayers as well.
+/**
+ * Encapsulates the logic needed to draw a textured tile in OpenGL.
  */
 public class Tile {
-    private FloatBuffer mVertexBuffer, mTexCoordBuffer;
-    private int[] mTextureIDs;
-    private int mWidth, mHeight;
     private boolean mHasValidImage;
+    private boolean mRepeat;
+    private int[] mTextureIDs;
+    private FloatBuffer mTexCoordBuffer, mVertexBuffer;
+    private IntSize mSize;
 
     private static final float[] VERTICES = {
         0.0f, 0.0f, 0.0f,
@@ -68,7 +70,10 @@ public class Tile {
         1.0f, 1.0f
     };
 
-    public Tile() {
+    public Tile() { this(false); }
+
+    public Tile(boolean repeat) {
+        mRepeat = repeat;
         mHasValidImage = false;
 
         ByteBuffer vertexBuffer = ByteBuffer.allocateDirect(VERTICES.length * 4);
@@ -84,22 +89,43 @@ public class Tile {
         mTexCoordBuffer.position(0);
     }
 
+    public IntSize getSize() { return mSize; }
+
     public void draw(GL10 gl) {
         if (!mHasValidImage)
             return;
 
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        gl.glPushMatrix();
 
-        gl.glScalef((float)mWidth, (float)mHeight, 1.0f);
+        if (mRepeat) {
+            gl.glMatrixMode(GL10.GL_TEXTURE);
+            gl.glPushMatrix();
+            gl.glScalef(LayerController.TILE_SIZE / mSize.width,
+                        LayerController.TILE_SIZE / mSize.height,
+                        1.0f);
+
+            gl.glMatrixMode(GL10.GL_MODELVIEW);
+            gl.glPushMatrix();
+            gl.glScalef(LayerController.TILE_SIZE, LayerController.TILE_SIZE, 1.0f);
+        } else {
+            gl.glPushMatrix();
+            gl.glScalef(mSize.width, mSize.height, 1.0f);
+        }
 
         gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureIDs[0]);
         gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
         gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
         gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
 
+        if (mRepeat) {
+            gl.glMatrixMode(GL10.GL_TEXTURE);
+            gl.glPopMatrix();
+            gl.glMatrixMode(GL10.GL_MODELVIEW);
+        }
+
         gl.glPopMatrix();
+
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
     }
 
@@ -114,7 +140,7 @@ public class Tile {
             gl.glGenTextures(mTextureIDs.length, mTextureIDs, 0);
         }
 
-        mWidth = newImage.width; mHeight = newImage.height;
+        mSize = new IntSize(newImage.width, newImage.height);
 
         int internalFormat = cairoFormatToGLInternalFormat(newImage.format);
         int format = cairoFormatToGLFormat(newImage.format);
@@ -123,11 +149,13 @@ public class Tile {
         gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureIDs[0]);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
 
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mWidth, mHeight, 0, format, type,
-                        newImage.buffer);
+        int repeatMode = mRepeat ? GL10.GL_REPEAT : GL10.GL_CLAMP_TO_EDGE;
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, repeatMode);
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, repeatMode);
+
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mSize.width, mSize.height, 0, format,
+                        type, newImage.buffer);
 
         mHasValidImage = true;
     }

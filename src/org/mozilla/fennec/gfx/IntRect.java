@@ -49,7 +49,13 @@ public class IntRect implements Cloneable {
     @Override
     public Object clone() { return new IntRect(x, y, width, height); }
 
+    @Override
+    public String toString() { return "(" + x + "," + y + "," + width + "," + height + ")"; }
+
     public IntPoint getOrigin() { return new IntPoint(x, y); }
+
+    public int getRight() { return x + width; }
+    public int getBottom() { return y + height; }
 }
 
 

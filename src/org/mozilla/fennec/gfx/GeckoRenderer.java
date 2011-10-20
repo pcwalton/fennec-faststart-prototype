@@ -54,6 +54,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class GeckoRenderer implements GLSurfaceView.Renderer {
     private Tile mBackgroundTile;
+    private Tile mCheckerboardTile;
     private LayerController mLayerController;
 
     // FPS display
@@ -62,6 +63,7 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
 
     public GeckoRenderer(LayerController layerController) {
         mBackgroundTile = new Tile();
+        mCheckerboardTile = new Tile(true);
         mLayerController = layerController;
 
         mFrameCountTimestamp = System.currentTimeMillis();
@@ -76,7 +78,7 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glDisable(GL10.GL_DITHER);
         gl.glEnable(GL10.GL_TEXTURE_2D);
 
-        recreateBackgroundTile(gl);
+        recreateTiles(gl);
     }
 
     public void onDrawFrame(GL10 gl) {
@@ -90,6 +92,14 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glLoadIdentity();
         mBackgroundTile.draw(gl);
 
+        IntRect pageRect = clampToScreen(getPageRect());
+        IntSize screenSize = mLayerController.getScreenSize();
+        gl.glEnable(GL10.GL_SCISSOR_TEST);
+        gl.glScissor(pageRect.x, screenSize.height - (pageRect.y + pageRect.height),
+                     pageRect.width, pageRect.height);
+
+        mCheckerboardTile.draw(gl);
+
         IntSize pageSize = mLayerController.getPageSize();
         IntRect visibleRect = mLayerController.getVisibleRect();
         float zoomFactor = mLayerController.getZoomFactor();
@@ -98,8 +108,29 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glScalef(zoomFactor, zoomFactor, 1.0f);
         gl.glTranslatef(-visibleRect.x, -visibleRect.y, 0.0f);
 
+        // Draw all the layers we have.
         rootLayer.draw(gl);
-        // TODO: Recurse down, draw children.
+
+        gl.glDisable(GL10.GL_SCISSOR_TEST);
+    }
+
+    private IntRect getPageRect() {
+        float zoomFactor = mLayerController.getZoomFactor();
+        IntRect visibleRect = mLayerController.getVisibleRect();
+        IntSize pageSize = mLayerController.getPageSize(); 
+        return new IntRect((int)Math.round(-zoomFactor * visibleRect.x),
+                           (int)Math.round(-zoomFactor * visibleRect.y),
+                           (int)Math.round(zoomFactor * pageSize.width),
+                           (int)Math.round(zoomFactor * pageSize.height));
+    }
+
+    private IntRect clampToScreen(IntRect rect) {
+        IntSize screenSize = mLayerController.getScreenSize();
+        int left = Math.max(0, rect.x);
+        int top = Math.max(0, rect.y);
+        int right = Math.min(screenSize.width, rect.getRight());
+        int bottom = Math.min(screenSize.height, rect.getBottom());
+        return new IntRect(left, top, right - left, bottom - top);
     }
 
     public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -110,24 +141,23 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
-        recreateBackgroundTile(gl);
-
+        recreateTiles(gl);
         mLayerController.onViewportSizeChanged(width, height);
 
         // TODO
     }
 
-    private void recreateBackgroundTile(GL10 gl) {
-        Bitmap backgroundBitmap = mLayerController.getBackgroundPattern();
-        int cairoFormat = bitmapConfigToCairoFormat(backgroundBitmap.getConfig());
-        int width = backgroundBitmap.getWidth(), height = backgroundBitmap.getHeight();
-        Log.e("Fennec", "background tile width = " + width);
-        ByteBuffer backgroundBitmapByteBuffer = ByteBuffer.allocateDirect(width * height * 4);
-        backgroundBitmap.copyPixelsToBuffer(backgroundBitmapByteBuffer.asIntBuffer());
+    private void recreateTile(GL10 gl, Bitmap bitmap, Tile tile) {
+        int cairoFormat = bitmapConfigToCairoFormat(bitmap.getConfig());
+        int width = bitmap.getWidth(), height = bitmap.getHeight();
+        ByteBuffer buffer = ByteBuffer.allocateDirect(width * height * 4);
+        bitmap.copyPixelsToBuffer(buffer.asIntBuffer());
+        tile.setImage(gl, new CairoImage(buffer, width, height, cairoFormat));
+    }
 
-        CairoImage backgroundImage = new CairoImage(backgroundBitmapByteBuffer, width, height,
-                                                    cairoFormat);
-        mBackgroundTile.setImage(gl, backgroundImage);
+    private void recreateTiles(GL10 gl) {
+        recreateTile(gl, mLayerController.getBackgroundPattern(), mBackgroundTile);
+        recreateTile(gl, mLayerController.getCheckerboardPattern(), mCheckerboardTile);
     }
 
     public static int bitmapConfigToCairoFormat(Bitmap.Config config) {
