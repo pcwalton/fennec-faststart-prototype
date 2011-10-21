@@ -89,6 +89,8 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         checkFPS();
 
+        //Log.e("Fennec", "visible rect: " + mLayerController.getVisibleRect());
+
         /* FIXME: Is this clear needed? */
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         Layer rootLayer = mLayerController.getRoot();
@@ -162,9 +164,9 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     }
 
     private void checkFPS() {
-        if (System.currentTimeMillis() >= mFrameCountTimestamp + 1000) {
+        if (System.currentTimeMillis() >= mFrameCountTimestamp + 5000) {
             mFrameCountTimestamp = System.currentTimeMillis();
-            Log.e("Fennec", "" + mFrameCount + " FPS");
+            Log.e("Fennec", "" + mFrameCount / 5 + " FPS");
             mFrameCount = 0;
         } else {
             mFrameCount++;

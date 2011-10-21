@@ -52,7 +52,8 @@ import android.os.AsyncTask;
 import android.util.Log;
 import java.nio.ByteBuffer;
 
-public class FakeGeckoLayerClient extends LayerClient {
+public class FakeGeckoLayerClient extends LayerClient
+                                  implements LayerController.OnGeometryChangeListener {
     private Bitmap mBitmap;
     private ByteBuffer mBuffer;
     private AsyncTask<Object,Object,CairoImage> mRenderTask;
@@ -73,9 +74,11 @@ public class FakeGeckoLayerClient extends LayerClient {
 
         mViewportController = new ViewportController();
         mViewportController.pageSize = new IntSize(PAGE_WIDTH, PAGE_HEIGHT);
-        mViewportController.visibleRect = new IntRect(0, 0, 1, 1);
+        mViewportController.visibleRect = getLayerController().getVisibleRect();
 
         render();
+
+        getLayerController().addOnGeometryChangeListener(this);
     }
 
     private void render() {
@@ -87,8 +90,6 @@ public class FakeGeckoLayerClient extends LayerClient {
         mRenderTask = new AsyncTask<Object,Object,CairoImage>() {
             protected CairoImage doInBackground(Object... args) {
                 IntRect viewportRect = mViewportController.getViewportRect();
-
-                Log.e("Fennec", "viewportRect: " + viewportRect.y);
 
                 Canvas canvas = new Canvas(mBitmap);
                 canvas.drawRGB(255, 255, 255);
@@ -119,11 +120,8 @@ public class FakeGeckoLayerClient extends LayerClient {
     }
 
     @Override
-    public void onZoomFactorChanged(float zoomFactor) { /* no-op */ }
-
-    @Override
-    public void onVisibleRectChanged(IntRect visibleRect) {
-        mViewportController.visibleRect = visibleRect;
+    public void onGeometryChange(LayerController sender) {
+        mViewportController.visibleRect = getLayerController().getVisibleRect();
         render();
     }
 

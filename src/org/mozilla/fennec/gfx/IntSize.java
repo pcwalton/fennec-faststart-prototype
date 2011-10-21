@@ -41,5 +41,8 @@ public class IntSize {
     public final int width, height;
 
     public IntSize(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
+
+    @Override
+    public String toString() { return "(" + width + "," + height + ")"; }
 }
 

@@ -46,21 +46,12 @@ import org.mozilla.fennec.gfx.LayerController;
  */
 public abstract class LayerClient {
     private LayerController mLayerController;
-    private float mZoomFactor;
 
     public abstract IntSize getPageSize();
-    public abstract void onVisibleRectChanged(IntRect visibleRect);
-    public abstract void onZoomFactorChanged(float zoomFactor);
 
     public LayerController getLayerController() { return mLayerController; }
     public void setLayerController(LayerController layerController) {
         mLayerController = layerController;
-    }
-
-    public float getZoomFactor() { return mZoomFactor; }
-    public void setZoomFactor(float zoomFactor) {
-        mZoomFactor = zoomFactor;
-        onZoomFactorChanged(zoomFactor);
     }
 }
 

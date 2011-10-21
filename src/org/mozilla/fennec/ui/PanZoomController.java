@@ -52,7 +52,7 @@ import java.util.TimerTask;
  * Many ideas are from Joe Hewitt's Scrollability:
  *   https://github.com/joehewitt/scrollability/
  */
-public class PanZoomController {
+public class PanZoomController implements LayerController.OnGeometryChangeListener {
     private LayerController mController;
 
     private static final float FRICTION = 0.97f;
@@ -83,6 +83,9 @@ public class PanZoomController {
     public PanZoomController(LayerController controller) {
         mController = controller;
         mX = new Axis(); mY = new Axis();
+
+        populatePositionAndLength();
+        controller.addOnGeometryChangeListener(this);
     }
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -98,6 +101,11 @@ public class PanZoomController {
         }
     }
 
+    @Override
+    public void onGeometryChange(LayerController sender) {
+        populatePositionAndLength();
+    }
+
     /*
      * Panning/scrolling
      */
@@ -110,7 +118,10 @@ public class PanZoomController {
     }
 
     private boolean onTouchMove(MotionEvent event) {
+        if (!mTouchMoved)
+            mLastTimestamp = System.currentTimeMillis();
         mTouchMoved = true;
+
         // TODO: Clear hold timeout
         track(event, System.currentTimeMillis());
 
@@ -134,7 +145,8 @@ public class PanZoomController {
         mX.velocity = mX.touchPos - event.getX(0); mY.velocity = mY.touchPos - event.getY(0);
         mX.touchPos = event.getX(0); mY.touchPos = event.getY(0);
 
-        float absVelocity = (float)Math.sqrt(mX.velocity * mX.velocity + mY.velocity * mY.velocity);
+        float absVelocity = (float)Math.sqrt(mX.velocity * mX.velocity +
+                                             mY.velocity * mY.velocity);
         mStopped = absVelocity < STOPPED_THRESHOLD;
 
         mX.applyEdgeResistance(); mX.displace();
@@ -162,13 +174,19 @@ public class PanZoomController {
         }, 0, 1000L/60L);
     }
 
-    private void updatePosition() { mController.scrollTo(mX.viewportPos, mY.viewportPos); }
+    private void updatePosition() {
+        Log.e("Fennec", "moving to " + mX.viewportPos + ", " + mY.viewportPos);
+        mController.scrollTo(mX.viewportPos, mY.viewportPos);
+    }
 
     // Populates the viewport info and length in the axes.
     private void populatePositionAndLength() {
         IntSize pageSize = mController.getPageSize();
         IntRect visibleRect = mController.getVisibleRect();
         IntSize screenSize = mController.getScreenSize();
+
+        Log.e("Fennec", "page size: " + pageSize + " visible rect: " + visibleRect +
+              "screen size: " + screenSize);
 
         mX.setPageLength(pageSize.width);
         mX.viewportPos = visibleRect.x;
@@ -189,7 +207,8 @@ public class PanZoomController {
             // snap back to avoid a jarring effect.
             boolean waitingToSnapX = mX.getFlingState() == Axis.FLING_STATE_WAITING_TO_SNAP;
             boolean waitingToSnapY = mY.getFlingState() == Axis.FLING_STATE_WAITING_TO_SNAP;
-            if (mX.getOverscroll() != Axis.NO_OVERSCROLL && mY.getOverscroll() != Axis.NO_OVERSCROLL) {
+            if (mX.getOverscroll() != Axis.NO_OVERSCROLL &&
+                    mY.getOverscroll() != Axis.NO_OVERSCROLL) {
                 if (waitingToSnapX && waitingToSnapY) {
                     mX.startSnap(); mY.startSnap();
                 }
@@ -228,27 +247,29 @@ public class PanZoomController {
         public static final int FLING_STATE_WAITING_TO_SNAP = 2;    // Waiting to snap into place.
         public static final int FLING_STATE_SNAPPING = 3;           // Snapping into place.
 
-        public static final int OVERSCROLLED_MINUS = -1;    // Overscrolled in the negative direction.
-        public static final int NO_OVERSCROLL = 0;          // Not overscrolled.
-        public static final int OVERSCROLLED_PLUS = 1;      // Overscrolled in the positive direction.
+        public static final int OVERSCROLLED_MINUS = -1;
+        /* Overscrolled in the negative direction. */
+        public static final int NO_OVERSCROLL = 0;
+        /* Not overscrolled. */
+        public static final int OVERSCROLLED_PLUS = 1;
+        /* Overscrolled in the positive direction. */
 
-        public float touchPos;                  // Position of the last touch.
-        public float velocity;                  // Velocity in this direction.
+        public float touchPos;                  /* Position of the last touch. */
+        public float velocity;                  /* Velocity in this direction. */
 
-        private int mFlingState;                // The fling state we're in on this axis.
-        private EaseOutAnimation mSnapAnim;     // The animation when the page is snapping back.
+        private int mFlingState;                /* The fling state we're in on this axis. */
+        private EaseOutAnimation mSnapAnim;     /* The animation when the page is snapping back. */
 
-        // These three need to be kept in sync with the layer controller.
+        /* These three need to be kept in sync with the layer controller. */
         public int viewportPos;
         private int mViewportLength;
-        private int mNaturalViewportLength;     // The viewport length with no zoom applied.
+        private int mScreenLength;
         private int mPageLength;
 
         public int getFlingState() { return mFlingState; }
+
         public void setViewportLength(int viewportLength) { mViewportLength = viewportLength; }
-        public void setNaturalViewportLength(int naturalViewportLength) {
-            mNaturalViewportLength = naturalViewportLength;
-        }
+        public void setScreenLength(int screenLength) { mScreenLength = screenLength; }
         public void setPageLength(int pageLength) { mPageLength = pageLength; }
 
         private int getViewportEnd() { return viewportPos + mViewportLength; }
@@ -386,8 +407,6 @@ public class PanZoomController {
             for (int i = 0; i < SUBDIVISION_COUNT; i++) {
                 float t = (float)i / (float)SUBDIVISION_COUNT;
                 float xPos = (3.0f*t*t - 2.0f*t*t*t) * (float)frames.length;
-                if (i % 100 == 0)
-                    Log.e("Fennec", "xpos = " + xPos);
                 if ((int)xPos < nextX)
                     continue;
 

@@ -51,6 +51,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View.OnTouchListener;
+import java.util.ArrayList;
 
 /*
  * The layer controller manages a tile that represents the visible page. It does panning and
@@ -73,10 +74,15 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     private OnTouchListener mOnTouchListener;   /* The touch listener. */
     private LayerClient mLayerClient;           /* The layer client. */
 
+    private ArrayList<OnGeometryChangeListener> mOnGeometryChangeListeners;
+    /* A list of listeners that will be notified whenever the geometry changes. */
+
     public static final int TILE_SIZE = 1024;
 
     public LayerController(Context context, LayerClient layerClient) {
         mContext = context;
+
+        mOnGeometryChangeListeners = new ArrayList<OnGeometryChangeListener>();
 
         mLayerClient = layerClient;
         layerClient.setLayerController(this);
@@ -96,7 +102,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public IntRect getVisibleRect() { return mVisibleRect; }
     public IntSize getScreenSize()  { return mScreenSize; }
 
-    public IntSize getPageSize() { return mLayerClient.getPageSize(); }
+    public IntSize getPageSize()    { return mLayerClient.getPageSize(); }
 
     public Bitmap getBackgroundPattern()    { return getDrawable("pattern"); }
     public Bitmap getCheckerboardPattern()  { return getDrawable("checkerboard"); }
@@ -124,8 +130,6 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         setVisibleRect(mVisibleRect.x, mVisibleRect.y,
                        (int)Math.round((float)newWidth / zoomFactor),
                        (int)Math.round((float)newHeight / zoomFactor));
-
-        mLayerClient.onZoomFactorChanged(zoomFactor);
     }
 
     public void setNeedsDisplay() {
@@ -138,14 +142,23 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
 
     public void setVisibleRect(int x, int y, int width, int height) {
         mVisibleRect = new IntRect(x, y, width, height);
-        mLayerClient.onVisibleRectChanged(mVisibleRect);
         setNeedsDisplay();
+        geometryChanged();
     }
 
     public boolean post(Runnable action) { return mGeckoView.post(action); }
 
     public void setOnTouchListener(OnTouchListener onTouchListener) {
         mOnTouchListener = onTouchListener;
+    }
+
+    public void addOnGeometryChangeListener(OnGeometryChangeListener listener) {
+        mOnGeometryChangeListeners.add(listener);
+    }
+
+    private void geometryChanged() {
+        for (OnGeometryChangeListener listener : mOnGeometryChangeListeners)
+            listener.onGeometryChange(this);
     }
 
     /*
@@ -173,6 +186,15 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
         mPanZoomController.onScaleEnd(detector);
+    }
+
+    /**
+     * Objects that wish to listen for changes in the layer geometry (page size, visible rect, or
+     * screen size) should implement this interface and register themselves with
+     * addOnGeometryChangeListener().
+     */
+    public static interface OnGeometryChangeListener {
+        public void onGeometryChange(LayerController sender);
     }
 }
 
