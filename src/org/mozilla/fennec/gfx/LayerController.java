@@ -38,7 +38,6 @@
 package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.GeckoView;
-import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
@@ -52,7 +51,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View.OnTouchListener;
-import java.util.HashMap;
 
 /*
  * The layer controller manages a tile that represents the visible page. It does panning and
@@ -78,11 +76,12 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public static final int TILE_SIZE = 1024;
 
     public LayerController(Context context, LayerClient layerClient) {
+        mContext = context;
+
         mLayerClient = layerClient;
         layerClient.setLayerController(this);
 
         mGeckoView = new GeckoView(context, this);
-        mContext = context;
         mVisibleRect = new IntRect(0, 0, 1, 1);     /* Gets filled in when the surface changes. */
         mScreenSize = new IntSize(1, 1);
         mPanZoomController = new PanZoomController(this);
@@ -91,26 +90,21 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public void setRoot(Layer layer) { mRootLayer = layer; }
     public void setLayerClient(LayerClient layerClient) { mLayerClient = layerClient; }
 
-    public Layer getRoot() { return mRootLayer; }
-    public GeckoView getView() { return mGeckoView; }
-    public Context getContext() { return mContext; }
+    public Layer getRoot()          { return mRootLayer; }
+    public GeckoView getView()      { return mGeckoView; }
+    public Context getContext()     { return mContext; }
     public IntRect getVisibleRect() { return mVisibleRect; }
-    public IntSize getScreenSize() { return mScreenSize; }
+    public IntSize getScreenSize()  { return mScreenSize; }
 
     public IntSize getPageSize() { return mLayerClient.getPageSize(); }
 
-    public Bitmap getBackgroundPattern() {
-        Resources resources = mContext.getResources();
-        int resourceID = resources.getIdentifier("pattern", "drawable", mContext.getPackageName());
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-        return BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
-    }
+    public Bitmap getBackgroundPattern()    { return getDrawable("pattern"); }
+    public Bitmap getCheckerboardPattern()  { return getDrawable("checkerboard"); }
+    public Bitmap getShadowPattern()        { return getDrawable("shadow"); }
 
-    public Bitmap getCheckerboardPattern() {
+    private Bitmap getDrawable(String name) {
         Resources resources = mContext.getResources();
-        int resourceID = resources.getIdentifier("checkerboard", "drawable",
-                                                 mContext.getPackageName());
+        int resourceID = resources.getIdentifier(name, "drawable", mContext.getPackageName());
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         return BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);

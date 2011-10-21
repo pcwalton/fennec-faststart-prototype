@@ -38,11 +38,11 @@
 package org.mozilla.fennec;
 
 import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerClient;
 import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.fennec.gfx.SingleTileLayer;
 import org.mozilla.fennec.ui.ViewportController;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -55,16 +55,17 @@ import java.nio.ByteBuffer;
 public class FakeGeckoLayerClient extends LayerClient {
     private Bitmap mBitmap;
     private ByteBuffer mBuffer;
-    private ImageLayer mImageLayer;
     private AsyncTask<Object,Object,CairoImage> mRenderTask;
+    private SingleTileLayer mTileLayer;
     private ViewportController mViewportController;
 
     private static final int PAGE_WIDTH = 1500;
     private static final int PAGE_HEIGHT = 2500;
 
     public void init() {
-        mImageLayer = new ImageLayer();
-        getLayerController().setRoot(mImageLayer);
+        mTileLayer = new SingleTileLayer();
+        getLayerController().setRoot(mTileLayer);
+
         mBuffer = ByteBuffer.allocateDirect(LayerController.TILE_SIZE * LayerController.TILE_SIZE *
                                             2);
         mBitmap = Bitmap.createBitmap(LayerController.TILE_SIZE, LayerController.TILE_SIZE,
@@ -109,8 +110,8 @@ public class FakeGeckoLayerClient extends LayerClient {
 
             protected void onPostExecute(CairoImage image) {
                 IntRect viewportRect = mViewportController.getViewportRect();
-                mImageLayer.origin = viewportRect.getOrigin();
-                mImageLayer.paintImage(image);
+                mTileLayer.origin = viewportRect.getOrigin();
+                mTileLayer.paintImage(image);
             }
         };
 

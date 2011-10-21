@@ -40,31 +40,38 @@ package org.mozilla.fennec.gfx;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.gfx.Tile;
+import org.mozilla.fennec.gfx.NinePatchTileLayer;
+import org.mozilla.fennec.gfx.SingleTileLayer;
+import org.mozilla.fennec.gfx.TileLayer;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
-import java.nio.ByteBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+import java.nio.ByteBuffer;
 
 public class GeckoRenderer implements GLSurfaceView.Renderer {
-    private Tile mBackgroundTile;
-    private Tile mCheckerboardTile;
     private LayerController mLayerController;
+
+    private SingleTileLayer mBackgroundLayer;
+    private SingleTileLayer mCheckerboardLayer;
+    private NinePatchTileLayer mShadowLayer;
 
     // FPS display
     private long mFrameCountTimestamp;
     private int mFrameCount;            // number of frames since last timestamp
 
     public GeckoRenderer(LayerController layerController) {
-        mBackgroundTile = new Tile();
-        mCheckerboardTile = new Tile(true);
         mLayerController = layerController;
+
+        mBackgroundLayer = new SingleTileLayer();
+        mBackgroundLayer.paintImage(new CairoImage(layerController.getBackgroundPattern()));
+        mCheckerboardLayer = new SingleTileLayer(true);
+        mCheckerboardLayer.paintImage(new CairoImage(layerController.getCheckerboardPattern()));
+        mShadowLayer = new NinePatchTileLayer(layerController);
+        mShadowLayer.paintImage(new CairoImage(layerController.getShadowPattern()));
 
         mFrameCountTimestamp = System.currentTimeMillis();
         mFrameCount = 0;
@@ -72,46 +79,54 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
 
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        gl.glClearDepthf(1.0f);
-        gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);
-        gl.glShadeModel(GL10.GL_SMOOTH);
+        gl.glClearDepthf(1.0f);             /* FIXME: Is this needed? */
+        gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);
+        gl.glShadeModel(GL10.GL_SMOOTH);    /* FIXME: Is this needed? */
         gl.glDisable(GL10.GL_DITHER);
         gl.glEnable(GL10.GL_TEXTURE_2D);
-
-        recreateTiles(gl);
     }
 
     public void onDrawFrame(GL10 gl) {
         checkFPS();
 
+        /* FIXME: Is this clear needed? */
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
         Layer rootLayer = mLayerController.getRoot();
         if (rootLayer == null)
             return;
 
+        /* Draw the background. */
         gl.glLoadIdentity();
-        mBackgroundTile.draw(gl);
+        mBackgroundLayer.draw(gl);
 
+        /* Draw the drop shadow. */
+        setupPageTransform(gl);
+        mShadowLayer.draw(gl);
+
+        /* Draw the checkerboard. */
         IntRect pageRect = clampToScreen(getPageRect());
         IntSize screenSize = mLayerController.getScreenSize();
         gl.glEnable(GL10.GL_SCISSOR_TEST);
         gl.glScissor(pageRect.x, screenSize.height - (pageRect.y + pageRect.height),
                      pageRect.width, pageRect.height);
 
-        mCheckerboardTile.draw(gl);
+        gl.glLoadIdentity();
+        mCheckerboardLayer.draw(gl);
 
-        IntSize pageSize = mLayerController.getPageSize();
+        /* Draw the layer the client added to us. */
+        setupPageTransform(gl);
+        rootLayer.draw(gl);
+
+        gl.glDisable(GL10.GL_SCISSOR_TEST);
+    }
+
+    private void setupPageTransform(GL10 gl) {
         IntRect visibleRect = mLayerController.getVisibleRect();
         float zoomFactor = mLayerController.getZoomFactor();
 
         gl.glLoadIdentity();
         gl.glScalef(zoomFactor, zoomFactor, 1.0f);
         gl.glTranslatef(-visibleRect.x, -visibleRect.y, 0.0f);
-
-        // Draw all the layers we have.
-        rootLayer.draw(gl);
-
-        gl.glDisable(GL10.GL_SCISSOR_TEST);
     }
 
     private IntRect getPageRect() {
@@ -141,33 +156,9 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
-        recreateTiles(gl);
         mLayerController.onViewportSizeChanged(width, height);
 
-        // TODO
-    }
-
-    private void recreateTile(GL10 gl, Bitmap bitmap, Tile tile) {
-        int cairoFormat = bitmapConfigToCairoFormat(bitmap.getConfig());
-        int width = bitmap.getWidth(), height = bitmap.getHeight();
-        ByteBuffer buffer = ByteBuffer.allocateDirect(width * height * 4);
-        bitmap.copyPixelsToBuffer(buffer.asIntBuffer());
-        tile.setImage(gl, new CairoImage(buffer, width, height, cairoFormat));
-    }
-
-    private void recreateTiles(GL10 gl) {
-        recreateTile(gl, mLayerController.getBackgroundPattern(), mBackgroundTile);
-        recreateTile(gl, mLayerController.getCheckerboardPattern(), mCheckerboardTile);
-    }
-
-    public static int bitmapConfigToCairoFormat(Bitmap.Config config) {
-        switch (config) {
-        case ALPHA_8:   return CairoImage.FORMAT_A8;
-        case ARGB_4444: throw new RuntimeException("ARGB_444 unsupported");
-        case ARGB_8888: return CairoImage.FORMAT_ARGB32;
-        case RGB_565:   return CairoImage.FORMAT_RGB16_565;
-        default:        throw new RuntimeException("Unknown Skia bitmap config");
-        }
+        /* TODO: Throw away tile images? */
     }
 
     private void checkFPS() {

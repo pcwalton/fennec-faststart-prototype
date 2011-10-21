@@ -47,6 +47,18 @@ public abstract class Layer {
         origin = new IntPoint(0, 0);
     }
 
-    public abstract void draw(GL10 gl);
+    public final void draw(GL10 gl) {
+        gl.glPushMatrix();
+        gl.glTranslatef(origin.x, origin.y, 0.0f);
+        onDraw(gl);
+        gl.glPopMatrix();
+    }
+
+    /**
+     * Subclasses implement this method to perform drawing.
+     *
+     * Invariant: The current matrix mode must be GL_MODELVIEW both before and after this call.
+     */
+    protected abstract void onDraw(GL10 gl);
 }
 

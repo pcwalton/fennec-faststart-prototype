@@ -37,6 +37,8 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.CairoUtils;
+import android.graphics.Bitmap;
 import java.nio.ByteBuffer;
 
 /*
@@ -48,6 +50,15 @@ public class CairoImage {
 
     public CairoImage(ByteBuffer inBuffer, int inWidth, int inHeight, int inFormat) {
         buffer = inBuffer; width = inWidth; height = inHeight; format = inFormat;
+    }
+
+    /** Creates a Cairo image from an Android bitmap. */
+    public CairoImage(Bitmap bitmap) {
+        format = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
+        width = bitmap.getWidth();
+        height = bitmap.getHeight();
+        buffer = ByteBuffer.allocateDirect(width * height * 4);
+        bitmap.copyPixelsToBuffer(buffer.asIntBuffer());
     }
 
     public static final int FORMAT_INVALID = -1;

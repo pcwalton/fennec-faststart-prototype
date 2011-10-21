@@ -39,11 +39,11 @@ package org.mozilla.fennec;
 
 import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.GeckoRenderer;
-import org.mozilla.fennec.gfx.ImageLayer;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerClient;
 import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.fennec.gfx.SingleTileLayer;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -80,9 +80,9 @@ public class StaticImageLayerClient extends LayerClient {
 
     /* Call this only after this client is hooked up to the layer controller. */
     public void init() {
-        ImageLayer imageLayer = new ImageLayer();
-        getLayerController().setRoot(imageLayer);
-        imageLayer.paintImage(new CairoImage(mBuffer, mWidth, mHeight, mFormat));
+        SingleTileLayer tileLayer = new SingleTileLayer();
+        getLayerController().setRoot(tileLayer);
+        tileLayer.paintImage(new CairoImage(mBuffer, mWidth, mHeight, mFormat));
     }
 
     @Override

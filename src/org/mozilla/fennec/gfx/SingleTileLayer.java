@@ -38,43 +38,69 @@
 package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.Layer;
-import org.mozilla.fennec.gfx.Tile;
-import android.content.Context;
+import org.mozilla.fennec.gfx.CairoUtils;
+import org.mozilla.fennec.gfx.IntSize;
+import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.fennec.gfx.TileLayer;
 import android.util.Log;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import javax.microedition.khronos.opengles.GL10;
 
-public class ImageLayer extends Layer {
-    private CairoImage mImage;
-    private boolean mSurfaceDirty;
-    private Tile mTile;
+/**
+ * Encapsulates the logic needed to draw a single textured tile.
+ */
+public class SingleTileLayer extends TileLayer {
+    private FloatBuffer mTexCoordBuffer, mVertexBuffer;
 
-    public ImageLayer() {
-        super();
-        mSurfaceDirty = true;
-        mTile = new Tile();
+    private static final float[] VERTICES = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f
+    };
+
+    private static final float[] TEX_COORDS = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 1.0f
+    };
+
+    public SingleTileLayer() { this(false); }
+
+    public SingleTileLayer(boolean repeat) {
+        super(repeat);
+
+        mVertexBuffer = createBuffer(VERTICES);
+        mTexCoordBuffer = createBuffer(TEX_COORDS);
     }
 
-    public void draw(GL10 gl) {
-        recreateTileIfNecessary(gl);
+    @Override
+    protected void onTileDraw(GL10 gl) {
+        IntSize size = getSize();
 
-        gl.glPushMatrix();
-        gl.glTranslatef(origin.x, origin.y, 0.0f);
-        mTile.draw(gl);
-        gl.glPopMatrix();
-    }
+        if (repeats()) {
+            gl.glMatrixMode(GL10.GL_TEXTURE);
+            gl.glPushMatrix();
+            gl.glScalef(LayerController.TILE_SIZE / size.width,
+                        LayerController.TILE_SIZE / size.height,
+                        1.0f);
 
-    private void recreateTileIfNecessary(GL10 gl) {
-        if (!mSurfaceDirty || mImage == null)
-            return;
-        mTile.setImage(gl, mImage);
-        mSurfaceDirty = false;
-    }
-    
-    public void paintImage(CairoImage image) {
-        if (mImage != image) {
-            mImage = image;
-            mSurfaceDirty = true;
+            gl.glMatrixMode(GL10.GL_MODELVIEW);
+            gl.glScalef(LayerController.TILE_SIZE, LayerController.TILE_SIZE, 1.0f);
+        } else {
+            gl.glScalef(size.width, size.height, 1.0f);
+        }
+
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, getTextureID());
+        drawTriangles(gl, mVertexBuffer, mTexCoordBuffer, 4);
+
+        if (repeats()) {
+            gl.glMatrixMode(GL10.GL_TEXTURE);
+            gl.glPopMatrix();
+            gl.glMatrixMode(GL10.GL_MODELVIEW);
         }
     }
 }
