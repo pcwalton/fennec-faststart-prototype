@@ -127,7 +127,11 @@ public class FakeGeckoLayerClient extends LayerClient {
 
                 mViewportController.setVisibleRect(mViewportRect);
 
-                //mTileLayer.origin = mViewportController.clampVisibleRect().getOrigin();
+                IntRect viewportRect = mViewportController.clampVisibleRect();
+                IntRect layerRect =
+                    mViewportController.untransformVisibleRect(viewportRect,
+                                                               controller.getPageSize());
+                mTileLayer.origin = layerRect.getOrigin();
                 mTileLayer.paintImage(image);
             }
         };

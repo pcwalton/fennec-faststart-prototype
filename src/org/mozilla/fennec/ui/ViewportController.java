@@ -81,6 +81,15 @@ public class ViewportController {
         return layerVisibleRect.scaleAll(1.0f / zoomFactor);
     }
 
+    /**
+     * Given the visible rectangle that the user is viewing and the layer controller's page size,
+     * returns the dimensions in layer coordinates that this corresponds to.
+     */
+    public IntRect untransformVisibleRect(IntRect viewportVisibleRect, IntSize layerPageSize) {
+        float zoomFactor = (float)layerPageSize.width / (float)mPageSize.width;
+        return viewportVisibleRect.scaleAll(zoomFactor);
+    }
+
     public IntSize getPageSize() { return mPageSize; }
     public void setVisibleRect(IntRect visibleRect) { mVisibleRect = visibleRect; }
 }
