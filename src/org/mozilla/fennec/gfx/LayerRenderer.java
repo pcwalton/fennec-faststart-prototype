@@ -40,6 +40,7 @@ package org.mozilla.fennec.gfx;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.fennec.gfx.LayerView;
 import org.mozilla.fennec.gfx.NinePatchTileLayer;
 import org.mozilla.fennec.gfx.SingleTileLayer;
 import org.mozilla.fennec.gfx.TileLayer;
@@ -52,9 +53,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import java.nio.ByteBuffer;
 
-public class GeckoRenderer implements GLSurfaceView.Renderer {
-    private LayerController mLayerController;
-
+/**
+ * The layer renderer implements the rendering logic for a layer view.
+ */
+public class LayerRenderer implements GLSurfaceView.Renderer {
+    private LayerView mView;
     private SingleTileLayer mBackgroundLayer;
     private SingleTileLayer mCheckerboardLayer;
     private NinePatchTileLayer mShadowLayer;
@@ -63,15 +66,17 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     private long mFrameCountTimestamp;
     private int mFrameCount;            // number of frames since last timestamp
 
-    public GeckoRenderer(LayerController layerController) {
-        mLayerController = layerController;
+    public LayerRenderer(LayerView view) {
+        mView = view;
 
+        /* FIXME: Layers should not be directly connected to the layer controller. */
+        LayerController controller = view.getController();
         mBackgroundLayer = new SingleTileLayer();
-        mBackgroundLayer.paintImage(new CairoImage(layerController.getBackgroundPattern()));
+        mBackgroundLayer.paintImage(new CairoImage(controller.getBackgroundPattern()));
         mCheckerboardLayer = new SingleTileLayer(true);
-        mCheckerboardLayer.paintImage(new CairoImage(layerController.getCheckerboardPattern()));
-        mShadowLayer = new NinePatchTileLayer(layerController);
-        mShadowLayer.paintImage(new CairoImage(layerController.getShadowPattern()));
+        mCheckerboardLayer.paintImage(new CairoImage(controller.getCheckerboardPattern()));
+        mShadowLayer = new NinePatchTileLayer(controller);
+        mShadowLayer.paintImage(new CairoImage(controller.getShadowPattern()));
 
         mFrameCountTimestamp = System.currentTimeMillis();
         mFrameCount = 0;
@@ -89,11 +94,13 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         checkFPS();
 
-        //Log.e("Fennec", "visible rect: " + mLayerController.getVisibleRect());
+        LayerController controller = mView.getController();
+
+        //Log.e("Fennec", "visible rect: " + controller.getVisibleRect());
 
         /* FIXME: Is this clear needed? */
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-        Layer rootLayer = mLayerController.getRoot();
+        Layer rootLayer = controller.getRoot();
         if (rootLayer == null)
             return;
 
@@ -107,7 +114,7 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
 
         /* Draw the checkerboard. */
         IntRect pageRect = clampToScreen(getPageRect());
-        IntSize screenSize = mLayerController.getScreenSize();
+        IntSize screenSize = controller.getScreenSize();
         gl.glEnable(GL10.GL_SCISSOR_TEST);
         gl.glScissor(pageRect.x, screenSize.height - (pageRect.y + pageRect.height),
                      pageRect.width, pageRect.height);
@@ -123,8 +130,9 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     }
 
     private void setupPageTransform(GL10 gl) {
-        IntRect visibleRect = mLayerController.getVisibleRect();
-        float zoomFactor = mLayerController.getZoomFactor();
+        LayerController controller = mView.getController();
+        IntRect visibleRect = controller.getVisibleRect();
+        float zoomFactor = controller.getZoomFactor();
 
         gl.glLoadIdentity();
         gl.glScalef(zoomFactor, zoomFactor, 1.0f);
@@ -132,9 +140,11 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     }
 
     private IntRect getPageRect() {
-        float zoomFactor = mLayerController.getZoomFactor();
-        IntRect visibleRect = mLayerController.getVisibleRect();
-        IntSize pageSize = mLayerController.getPageSize(); 
+        LayerController controller = mView.getController();
+        float zoomFactor = controller.getZoomFactor();
+        IntRect visibleRect = controller.getVisibleRect();
+        IntSize pageSize = controller.getPageSize(); 
+
         return new IntRect((int)Math.round(-zoomFactor * visibleRect.x),
                            (int)Math.round(-zoomFactor * visibleRect.y),
                            (int)Math.round(zoomFactor * pageSize.width),
@@ -142,7 +152,9 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
     }
 
     private IntRect clampToScreen(IntRect rect) {
-        IntSize screenSize = mLayerController.getScreenSize();
+        LayerController controller = mView.getController();
+        IntSize screenSize = controller.getScreenSize();
+
         int left = Math.max(0, rect.x);
         int top = Math.max(0, rect.y);
         int right = Math.min(screenSize.width, rect.getRight());
@@ -158,7 +170,7 @@ public class GeckoRenderer implements GLSurfaceView.Renderer {
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glLoadIdentity();
 
-        mLayerController.onViewportSizeChanged(width, height);
+        mView.setScreenSize(width, height);
 
         /* TODO: Throw away tile images? */
     }

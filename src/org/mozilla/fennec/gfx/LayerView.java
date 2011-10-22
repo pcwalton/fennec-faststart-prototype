@@ -45,30 +45,41 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 
-/*
- * A pannable, zoomable Gecko rendering view. The drawing logic is in GeckoRenderer, while the
- * layer controller drives the view's logic.
+/**
+ * A view rendered by the layer compositor.
+ *
+ * This view delegates to LayerRenderer to actually do the drawing. Its role is largely that of a
+ * mediator between the LayerRenderer and the LayerController.
  */
-public class GeckoView extends GLSurfaceView {
+public class LayerView extends GLSurfaceView {
     private Context mContext;
-    private GeckoRenderer mRenderer;
-    private LayerController mLayerController;
+    private LayerController mController;
+    private LayerRenderer mRenderer;
     private ScaleGestureDetector mScaleGestureDetector;
 
-    public GeckoView(Context context, LayerController layerController) {
+    public LayerView(Context context, LayerController controller) {
         super(context);
+
         mContext = context;
-        mLayerController = layerController;
-        mRenderer = new GeckoRenderer(mLayerController);
+        mController = controller;
+        mRenderer = new LayerRenderer(this);
         setRenderer(mRenderer);
-        mScaleGestureDetector = new ScaleGestureDetector(context, mLayerController);
+        mScaleGestureDetector = new ScaleGestureDetector(context, controller);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean result = mScaleGestureDetector.onTouchEvent(event);
-        result = mLayerController.onTouchEvent(event) || result;
+        result = mController.onTouchEvent(event) || result;
         return result;
+    }
+
+    public LayerController getController() { return mController; }
+    public void geometryChanged() { /* TODO: Schedule a redraw. */ }
+
+    /** The LayerRenderer calls this to indicate that the window has changed size. */
+    public void setScreenSize(int width, int height) {
+        mController.setScreenSize(width, height);
     }
 }
 

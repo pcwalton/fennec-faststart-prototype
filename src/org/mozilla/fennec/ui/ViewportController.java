@@ -39,17 +39,49 @@ package org.mozilla.fennec.ui;
 
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerController;
 
-/* Manages the dimensions of the page viewport. */
+/** Manages the dimensions of the page viewport. */
 public class ViewportController {
-    public IntRect visibleRect;
-    public IntSize pageSize;
+    private IntSize mPageSize;
+    private IntRect mVisibleRect;
 
-    public IntRect getViewportRect() {
-        int x = Math.max(0, Math.min(visibleRect.x, pageSize.width - visibleRect.width));
-        int y = Math.max(0, Math.min(visibleRect.y, pageSize.height - visibleRect.height));
-        return new IntRect(x, y, visibleRect.width, visibleRect.height);
+    public ViewportController(IntSize pageSize, IntRect visibleRect) {
+        mPageSize = pageSize;
+        mVisibleRect = visibleRect;
     }
+
+    /** Returns the given rect, clamped to the boundaries of the page. */
+    public IntRect clampRect(IntRect rect) {
+        int x = Math.max(0, Math.min(rect.x, mPageSize.width - rect.width));
+        int y = Math.max(0, Math.min(rect.y, mPageSize.height - rect.height));
+        return new IntRect(x, y, rect.width, rect.height);
+    }
+
+    /** Returns the visible rect, clamped to the boundaries of the page. */
+    public IntRect clampVisibleRect() {
+        return clampRect(mVisibleRect);
+    }
+
+    /**
+     * Given the layer controller's visible rect, page size, and screen size, returns the zoom
+     * factor.
+     */
+    public float getZoomFactor(IntRect layerVisibleRect, IntSize layerPageSize,
+                               IntSize screenSize) {
+        IntRect transformed = transformVisibleRect(layerVisibleRect, layerPageSize);
+        return (float)screenSize.width / (float)transformed.width;
+    }
+
+    /**
+     * Given the visible rectangle that the user is viewing and the layer controller's page size,
+     * returns the dimensions of the box that this corresponds to on the page.
+     */
+    public IntRect transformVisibleRect(IntRect layerVisibleRect, IntSize layerPageSize) {
+        float zoomFactor = (float)layerPageSize.width / (float)mPageSize.width;
+        return layerVisibleRect.scaleAll(1.0f / zoomFactor);
+    }
+
+    public IntSize getPageSize() { return mPageSize; }
+    public void setVisibleRect(IntRect visibleRect) { mVisibleRect = visibleRect; }
 }
 

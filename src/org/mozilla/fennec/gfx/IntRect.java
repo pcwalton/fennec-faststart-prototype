@@ -56,6 +56,14 @@ public class IntRect implements Cloneable {
 
     public int getRight() { return x + width; }
     public int getBottom() { return y + height; }
+
+    /** Scales all four dimensions of this rectangle by the given factor. */
+    public IntRect scaleAll(float factor) {
+        return new IntRect((int)Math.round(x * factor),
+                           (int)Math.round(y * factor),
+                           (int)Math.round(width * factor),
+                           (int)Math.round(height * factor));
+    }
 }
 
 

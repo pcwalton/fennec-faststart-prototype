@@ -38,7 +38,7 @@
 package org.mozilla.fennec;
 
 import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.GeckoRenderer;
+import org.mozilla.fennec.gfx.CairoUtils;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerClient;
@@ -71,7 +71,7 @@ public class StaticImageLayerClient extends LayerClient {
 
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
-        mFormat = GeckoRenderer.bitmapConfigToCairoFormat(bitmap.getConfig());
+        mFormat = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
         mBuffer = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
         bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
 
@@ -86,10 +86,10 @@ public class StaticImageLayerClient extends LayerClient {
     }
 
     @Override
+    public void geometryChanged() { /* no-op */ }
+    @Override
     public IntSize getPageSize() { return new IntSize(995, 1250); }
     @Override
-    public void onVisibleRectChanged(IntRect visibleRect) { /* no-op */ }
-    @Override
-    public void onZoomFactorChanged(float zoomFactor) { /* no-op */ }
+    public void render() { /* no-op */ }
 }
 

@@ -37,11 +37,11 @@
 
 package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
 import org.mozilla.fennec.gfx.LayerClient;
+import org.mozilla.fennec.gfx.LayerView;
 import org.mozilla.fennec.ui.PanZoomController;
 import android.content.Context;
 import android.content.res.Resources;
@@ -60,10 +60,11 @@ import java.util.ArrayList;
  */
 public class LayerController implements ScaleGestureDetector.OnScaleGestureListener {
     private Layer mRootLayer;                   /* The root layer. */
-    private GeckoView mGeckoView;               /* The main Gecko rendering view. */
+    private LayerView mView;                    /* The main rendering view. */
     private Context mContext;                   /* The current context. */
     private IntRect mVisibleRect;               /* The current visible region. */
     private IntSize mScreenSize;                /* The screen size of the viewport. */
+    private IntSize mPageSize;                  /* The current page size. */
 
     private PanZoomController mPanZoomController;
     /*
@@ -76,6 +77,8 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
 
     private ArrayList<OnGeometryChangeListener> mOnGeometryChangeListeners;
     /* A list of listeners that will be notified whenever the geometry changes. */
+    private ArrayList<OnPageSizeChangeListener> mOnPageSizeChangeListeners;
+    /* A list of listeners that will be notified whenever the page size changes. */
 
     public static final int TILE_SIZE = 1024;
 
@@ -83,13 +86,15 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         mContext = context;
 
         mOnGeometryChangeListeners = new ArrayList<OnGeometryChangeListener>();
+        mOnPageSizeChangeListeners = new ArrayList<OnPageSizeChangeListener>();
 
         mLayerClient = layerClient;
-        layerClient.setLayerController(this);
-
-        mGeckoView = new GeckoView(context, this);
         mVisibleRect = new IntRect(0, 0, 1, 1);     /* Gets filled in when the surface changes. */
         mScreenSize = new IntSize(1, 1);
+        mPageSize = layerClient.getPageSize();
+        layerClient.setLayerController(this);
+
+        mView = new LayerView(context, this);
         mPanZoomController = new PanZoomController(this);
     }
 
@@ -97,12 +102,11 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public void setLayerClient(LayerClient layerClient) { mLayerClient = layerClient; }
 
     public Layer getRoot()          { return mRootLayer; }
-    public GeckoView getView()      { return mGeckoView; }
+    public LayerView getView()      { return mView; }
     public Context getContext()     { return mContext; }
     public IntRect getVisibleRect() { return mVisibleRect; }
     public IntSize getScreenSize()  { return mScreenSize; }
-
-    public IntSize getPageSize()    { return mLayerClient.getPageSize(); }
+    public IntSize getPageSize()    { return mPageSize; }
 
     public Bitmap getBackgroundPattern()    { return getDrawable("pattern"); }
     public Bitmap getCheckerboardPattern()  { return getDrawable("checkerboard"); }
@@ -122,14 +126,22 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
      */
     public float getZoomFactor() { return (float)mScreenSize.width / (float)mVisibleRect.width; }
 
-    public void onViewportSizeChanged(int newWidth, int newHeight) {
+    /**
+     * The view calls this to indicate that the screen changed size.
+     *
+     * TODO: Refactor this to use an interface. Expose that interface only to the view and not
+     * to the layer client. That way, the layer client won't be tempted to call this, which might
+     * result in an infinite loop.
+     */
+    public void setScreenSize(int width, int height) {
         float zoomFactor = getZoomFactor();     /* Must come first. */
 
-        mScreenSize = new IntSize(newWidth, newHeight);
-
+        mScreenSize = new IntSize(width, height);
         setVisibleRect(mVisibleRect.x, mVisibleRect.y,
-                       (int)Math.round((float)newWidth / zoomFactor),
-                       (int)Math.round((float)newHeight / zoomFactor));
+                       (int)Math.round((float)width / zoomFactor),
+                       (int)Math.round((float)height / zoomFactor));
+
+        notifyLayerClientOfGeometryChange();
     }
 
     public void setNeedsDisplay() {
@@ -143,22 +155,40 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public void setVisibleRect(int x, int y, int width, int height) {
         mVisibleRect = new IntRect(x, y, width, height);
         setNeedsDisplay();
-        geometryChanged();
     }
 
-    public boolean post(Runnable action) { return mGeckoView.post(action); }
+    /**
+     * Sets the zoom factor to 1, adjusting the visible rect accordingly. The Gecko layer client
+     * calls this function after a zoom has completed and Gecko is done rendering the new visible
+     * region.
+     */
+    public void unzoom() {
+        float zoomFactor = getZoomFactor();
+        mVisibleRect = new IntRect((int)Math.round(mVisibleRect.x * zoomFactor),
+                                   (int)Math.round(mVisibleRect.y * zoomFactor),
+                                   mScreenSize.width, mScreenSize.height);
+        mPageSize = mPageSize.scale(zoomFactor);
+        setNeedsDisplay();
+    }
+
+    public boolean post(Runnable action) { return mView.post(action); }
 
     public void setOnTouchListener(OnTouchListener onTouchListener) {
         mOnTouchListener = onTouchListener;
     }
 
-    public void addOnGeometryChangeListener(OnGeometryChangeListener listener) {
-        mOnGeometryChangeListeners.add(listener);
+    /**
+     * The view as well as the controller itself use this method to notify the layer client that
+     * the geometry changed.
+     */
+    public void notifyLayerClientOfGeometryChange() {
+        mLayerClient.geometryChanged();
     }
 
-    private void geometryChanged() {
-        for (OnGeometryChangeListener listener : mOnGeometryChangeListeners)
-            listener.onGeometryChange(this);
+    // Informs the view and the panning and zooming controller that the geometry changed.
+    public void notifyViewOfGeometryChange() {
+        mView.geometryChanged();
+        mPanZoomController.geometryChanged();
     }
 
     /*
@@ -169,7 +199,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public boolean onTouchEvent(MotionEvent event) {
         boolean result = mPanZoomController.onTouchEvent(event);
         if (mOnTouchListener != null)
-            result = mOnTouchListener.onTouch(mGeckoView, event) || result;
+            result = mOnTouchListener.onTouch(mView, event) || result;
         return result;
     }
 
@@ -189,12 +219,19 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     }
 
     /**
-     * Objects that wish to listen for changes in the layer geometry (page size, visible rect, or
-     * screen size) should implement this interface and register themselves with
-     * addOnGeometryChangeListener().
+     * Objects that wish to listen for changes in the layer geometry (visible rect or screen size)
+     * should implement this interface and register themselves with addOnGeometryChangeListener().
      */
     public static interface OnGeometryChangeListener {
         public void onGeometryChange(LayerController sender);
+    }
+
+    /**
+     * Objects that wish to listen for changes in the page size should implement this interface and
+     * register themselves with addOnPageSizeChangeListener().
+     */
+    public static interface OnPageSizeChangeListener {
+        public void onPageSizeChange(LayerController sender);
     }
 }
 

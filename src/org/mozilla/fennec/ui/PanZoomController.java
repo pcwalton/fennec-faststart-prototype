@@ -52,7 +52,7 @@ import java.util.TimerTask;
  * Many ideas are from Joe Hewitt's Scrollability:
  *   https://github.com/joehewitt/scrollability/
  */
-public class PanZoomController implements LayerController.OnGeometryChangeListener {
+public class PanZoomController {
     private LayerController mController;
 
     private static final float FRICTION = 0.97f;
@@ -85,7 +85,6 @@ public class PanZoomController implements LayerController.OnGeometryChangeListen
         mX = new Axis(); mY = new Axis();
 
         populatePositionAndLength();
-        controller.addOnGeometryChangeListener(this);
     }
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -101,8 +100,7 @@ public class PanZoomController implements LayerController.OnGeometryChangeListen
         }
     }
 
-    @Override
-    public void onGeometryChange(LayerController sender) {
+    public void geometryChanged() {
         populatePositionAndLength();
     }
 
@@ -176,7 +174,9 @@ public class PanZoomController implements LayerController.OnGeometryChangeListen
 
     private void updatePosition() {
         Log.e("Fennec", "moving to " + mX.viewportPos + ", " + mY.viewportPos);
+
         mController.scrollTo(mX.viewportPos, mY.viewportPos);
+        mController.notifyLayerClientOfGeometryChange();
     }
 
     // Populates the viewport info and length in the axes.
@@ -445,6 +445,7 @@ public class PanZoomController implements LayerController.OnGeometryChangeListen
         float x = mInitialZoomRect.x, y = mInitialZoomRect.y;
         mController.setVisibleRect((int)Math.round(x), (int)Math.round(y),
                                    (int)Math.round(width), (int)Math.round(height));
+        mController.notifyLayerClientOfGeometryChange();
         return true;
     }
 

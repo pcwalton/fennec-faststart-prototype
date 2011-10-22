@@ -44,5 +44,10 @@ public class IntSize {
 
     @Override
     public String toString() { return "(" + width + "," + height + ")"; }
+
+    public IntSize scale(float factor) {
+        return new IntSize((int)Math.round(width * factor),
+                           (int)Math.round(height * factor));
+    }
 }
 

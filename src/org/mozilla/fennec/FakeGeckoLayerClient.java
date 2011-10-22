@@ -52,8 +52,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 import java.nio.ByteBuffer;
 
-public class FakeGeckoLayerClient extends LayerClient
-                                  implements LayerController.OnGeometryChangeListener {
+public class FakeGeckoLayerClient extends LayerClient {
     private Bitmap mBitmap;
     private ByteBuffer mBuffer;
     private AsyncTask<Object,Object,CairoImage> mRenderTask;
@@ -63,7 +62,16 @@ public class FakeGeckoLayerClient extends LayerClient
     private static final int PAGE_WIDTH = 1500;
     private static final int PAGE_HEIGHT = 2500;
 
+    public FakeGeckoLayerClient() {
+        super();
+        mViewportController = new ViewportController(new IntSize(PAGE_WIDTH, PAGE_HEIGHT),
+                                                     new IntRect(0, 0, 1, 1));
+    }
+
+    @Override
     public void init() {
+        mViewportController.setVisibleRect(getLayerController().getVisibleRect());
+
         mTileLayer = new SingleTileLayer();
         getLayerController().setRoot(mTileLayer);
 
@@ -72,24 +80,22 @@ public class FakeGeckoLayerClient extends LayerClient
         mBitmap = Bitmap.createBitmap(LayerController.TILE_SIZE, LayerController.TILE_SIZE,
                                       Bitmap.Config.RGB_565);
 
-        mViewportController = new ViewportController();
-        mViewportController.pageSize = new IntSize(PAGE_WIDTH, PAGE_HEIGHT);
-        mViewportController.visibleRect = getLayerController().getVisibleRect();
-
         render();
-
-        getLayerController().addOnGeometryChangeListener(this);
     }
 
-    private void render() {
+    @Override
+    protected void render() {
         if (mRenderTask != null) {
             mRenderTask.cancel(true);
             mRenderTask = null;
         }
 
         mRenderTask = new AsyncTask<Object,Object,CairoImage>() {
+            private IntRect mViewportRect;
+
             protected CairoImage doInBackground(Object... args) {
-                IntRect viewportRect = mViewportController.getViewportRect();
+                mViewportRect = mViewportController.clampRect(getTransformedVisibleRect());
+                float zoomFactor = getZoomFactor();
 
                 Canvas canvas = new Canvas(mBitmap);
                 canvas.drawRGB(255, 255, 255);
@@ -97,9 +103,14 @@ public class FakeGeckoLayerClient extends LayerClient
                 Paint paint = new Paint();
                 paint.setAntiAlias(true);
                 paint.setColor(Color.BLACK);
+                paint.setTextSize(12.0f * zoomFactor);
+
                 for (int i = 0; i < TEXT.length; i++) {
-                    canvas.drawText(TEXT[i], -viewportRect.x, 12.0f + 14.0f * i - viewportRect.y,
+                    canvas.drawText(TEXT[i],
+                                    (12.0f - mViewportRect.x) * zoomFactor,
+                                    (12.0f + 12.0f + 14.0f * i - mViewportRect.y) * zoomFactor,
                                     paint);
+
                     if (isCancelled())
                         return null;
                 }
@@ -110,8 +121,13 @@ public class FakeGeckoLayerClient extends LayerClient
             }
 
             protected void onPostExecute(CairoImage image) {
-                IntRect viewportRect = mViewportController.getViewportRect();
-                mTileLayer.origin = viewportRect.getOrigin();
+                LayerController controller = getLayerController();
+                controller.unzoom();
+                controller.notifyViewOfGeometryChange();
+
+                mViewportController.setVisibleRect(mViewportRect);
+
+                //mTileLayer.origin = mViewportController.clampVisibleRect().getOrigin();
                 mTileLayer.paintImage(image);
             }
         };
@@ -120,13 +136,29 @@ public class FakeGeckoLayerClient extends LayerClient
     }
 
     @Override
-    public void onGeometryChange(LayerController sender) {
-        mViewportController.visibleRect = getLayerController().getVisibleRect();
-        render();
+    public IntSize getPageSize() {
+        return mViewportController.getPageSize();
     }
 
     @Override
-    public IntSize getPageSize() { return new IntSize(PAGE_WIDTH, PAGE_HEIGHT); }
+    public void geometryChanged() {
+        mViewportController.setVisibleRect(getTransformedVisibleRect());
+        render();
+    }
+
+    /* Returns the dimensions of the box in page coordinates that the user is viewing. */
+    private IntRect getTransformedVisibleRect() {
+        LayerController layerController = getLayerController();
+        return mViewportController.transformVisibleRect(layerController.getVisibleRect(),
+                                                        layerController.getPageSize());
+    }
+
+    private float getZoomFactor() {
+        LayerController layerController = getLayerController();
+        return mViewportController.getZoomFactor(layerController.getVisibleRect(),
+                                                 layerController.getPageSize(),
+                                                 layerController.getScreenSize());
+    }
 
     private static final String[] TEXT = {
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ut tortor velit, eget volutpat erat. Duis non leo neque. Maecenas tincidunt, nunc eget dapibus consequat, nisl diam elementum eros, non",
