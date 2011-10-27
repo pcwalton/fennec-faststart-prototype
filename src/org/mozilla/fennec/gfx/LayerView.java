@@ -37,7 +37,6 @@
 
 package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennec.gfx.GeckoRenderer;
 import org.mozilla.fennec.gfx.LayerController;
 import android.content.Context;
 import android.opengl.GLSurfaceView;

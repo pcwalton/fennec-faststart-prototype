@@ -53,6 +53,7 @@ public class IntRect implements Cloneable {
     public String toString() { return "(" + x + "," + y + "," + width + "," + height + ")"; }
 
     public IntPoint getOrigin() { return new IntPoint(x, y); }
+    public IntPoint getCenter() { return new IntPoint(x + width / 2, y + height / 2); }
 
     public int getRight() { return x + width; }
     public int getBottom() { return y + height; }

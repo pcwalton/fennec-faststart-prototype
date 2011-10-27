@@ -37,8 +37,10 @@
 
 package org.mozilla.fennec.ui;
 
+import org.mozilla.fennec.gfx.IntPoint;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
+import org.mozilla.fennec.gfx.LayerController;
 
 /** Manages the dimensions of the page viewport. */
 public class ViewportController {
@@ -50,16 +52,20 @@ public class ViewportController {
         mVisibleRect = visibleRect;
     }
 
-    /** Returns the given rect, clamped to the boundaries of the page. */
+    /** Returns the given rect, clamped to the boundaries of a tile. */
     public IntRect clampRect(IntRect rect) {
         int x = Math.max(0, Math.min(rect.x, mPageSize.width - rect.width));
         int y = Math.max(0, Math.min(rect.y, mPageSize.height - rect.height));
         return new IntRect(x, y, rect.width, rect.height);
     }
 
-    /** Returns the visible rect, clamped to the boundaries of the page. */
-    public IntRect clampVisibleRect() {
-        return clampRect(mVisibleRect);
+    /** Returns the coordinates of a tile centered on the given rect. */
+    public static IntRect widenRect(IntRect rect) {
+        IntPoint center = rect.getCenter();
+        return new IntRect(center.x - LayerController.TILE_SIZE / 2,
+                           center.y - LayerController.TILE_SIZE / 2,
+                           LayerController.TILE_SIZE,
+                           LayerController.TILE_SIZE);
     }
 
     /**
@@ -91,6 +97,8 @@ public class ViewportController {
     }
 
     public IntSize getPageSize() { return mPageSize; }
+    public void setPageSize(IntSize pageSize) { mPageSize = pageSize; }
+    public IntRect getVisibleRect() { return mVisibleRect; }
     public void setVisibleRect(IntRect visibleRect) { mVisibleRect = visibleRect; }
 }
 
