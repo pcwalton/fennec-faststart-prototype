@@ -140,6 +140,13 @@ public class FakeGeckoLayerClient extends LayerClient {
         mRenderTask.execute();
     }
 
+    /** Called whenever the page changes size. */
+    public void setPageSize(IntSize pageSize) {
+        mViewportController.setPageSize(pageSize);
+        getLayerController().setPageSize(pageSize);
+
+    }
+
     @Override
     public IntSize getPageSize() {
         return mViewportController.getPageSize();

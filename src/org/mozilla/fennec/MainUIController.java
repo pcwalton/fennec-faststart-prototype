@@ -40,18 +40,26 @@ package org.mozilla.fennec;
 import org.mozilla.fennec.FakeGeckoLayerClient;
 import org.mozilla.fennec.StaticImageLayerClient;
 import org.mozilla.fennec.gfx.GeckoView;
+import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 public class MainUIController {
     private Activity mActivity;
-    //private SurfaceTestController mController;
+    private FakeGeckoLayerClient mGeckoLayerClient;
     private View outerView;
 
     public MainUIController(Activity activity) {
@@ -72,9 +80,9 @@ public class MainUIController {
         LayerController layerController = new LayerController(mActivity, staticImageLayerClient);
         staticImageLayerClient.init();*/
 
-        FakeGeckoLayerClient geckoLayerClient = new FakeGeckoLayerClient();
-        LayerController layerController = new LayerController(mActivity, geckoLayerClient);
-        geckoLayerClient.init();
+        mGeckoLayerClient = new FakeGeckoLayerClient();
+        LayerController layerController = new LayerController(mActivity, mGeckoLayerClient);
+        mGeckoLayerClient.init();
 
         View contentView = layerController.getView();
         LinearLayout.LayoutParams contentViewLayout =
@@ -94,5 +102,38 @@ public class MainUIController {
     public View getOuterView() { return outerView; }
 
     public void start() { /* TODO */ }
+
+    public void createMenu(Menu menu) {
+        menu.add("Set Page Size").setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                final EditText editText = new EditText(mActivity);
+                new AlertDialog.Builder(mActivity)
+                    .setTitle("Set Page Size")
+                    .setMessage("Enter a new page size, space-separated (e.g. 320 240):")
+                    .setView(editText)
+                    .setPositiveButton("OK", new OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            String[] strings = editText.getText().toString().split("\\s+");
+                            IntSize newSize = new IntSize(Integer.parseInt(strings[0]),
+                                                          Integer.parseInt(strings[1]));
+                            mGeckoLayerClient.setPageSize(newSize);
+                        }
+                    })
+                    .show();
+
+                return true;
+            }
+        });
+
+        menu.add("Quit").setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                System.exit(0);
+                return true;
+            }
+        });
+    }
 }
 
