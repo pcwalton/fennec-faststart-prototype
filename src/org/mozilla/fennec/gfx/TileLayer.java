@@ -91,9 +91,6 @@ public abstract class TileLayer extends Layer {
     }
 
     public void paintImage(CairoImage image) {
-        if (mImage == image)
-            return;
-
         mImage = image;
         mTextureUploadNeeded = true;
 
@@ -101,8 +98,9 @@ public abstract class TileLayer extends Layer {
          * Assert that the image has a power-of-two size. Phones tend not to support NPOT textures,
          * and OpenGL ES doesn't seem to let us efficiently slice up a NPOT bitmap.
          */
-        assert (mImage.width & (mImage.width - 1)) == 0;
-        assert (mImage.height & (mImage.height - 1)) == 0;
+        int width = mImage.getWidth(), height = mImage.getHeight();
+        assert (width & (width - 1)) == 0;
+        assert (height & (height - 1)) == 0;
     }
 
     private void uploadTexture(GL10 gl) {
@@ -111,11 +109,13 @@ public abstract class TileLayer extends Layer {
             gl.glGenTextures(mTextureIDs.length, mTextureIDs, 0);
         }
 
-        mSize = new IntSize(mImage.width, mImage.height);
+        int width = mImage.getWidth(), height = mImage.getHeight();
+        mSize = new IntSize(width, height);
 
-        int internalFormat = CairoUtils.cairoFormatToGLInternalFormat(mImage.format);
-        int format = CairoUtils.cairoFormatToGLFormat(mImage.format);
-        int type = CairoUtils.cairoFormatToGLType(mImage.format);
+        int cairoFormat = mImage.getFormat();
+        int internalFormat = CairoUtils.cairoFormatToGLInternalFormat(cairoFormat);
+        int format = CairoUtils.cairoFormatToGLFormat(cairoFormat);
+        int type = CairoUtils.cairoFormatToGLType(cairoFormat);
 
         gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureIDs[0]);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
@@ -125,8 +125,13 @@ public abstract class TileLayer extends Layer {
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, repeatMode);
         gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, repeatMode);
 
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mSize.width, mSize.height, 0, format,
-                        type, mImage.buffer);
+        ByteBuffer buffer = mImage.lockBuffer();
+        try {
+            gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mSize.width, mSize.height, 0,
+                            format, type, buffer);
+        } finally {
+            mImage.unlockBuffer();
+        }
 
         mTextureUploadNeeded = false;
     }

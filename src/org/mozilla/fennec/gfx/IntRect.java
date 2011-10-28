@@ -38,6 +38,8 @@
 package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.IntPoint;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class IntRect implements Cloneable {
     public final int x, y, width, height;
@@ -46,8 +48,28 @@ public class IntRect implements Cloneable {
         x = inX; y = inY; width = inWidth; height = inHeight;
     }
 
+    public IntRect(JSONObject json) {
+        try {
+            x = json.getInt("x");
+            y = json.getInt("y");
+            width = json.getInt("width");
+            height = json.getInt("height");
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public Object clone() { return new IntRect(x, y, width, height); }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof IntRect))
+            return false;
+        IntRect otherRect = (IntRect)other;
+        return x == otherRect.x && y == otherRect.y && width == otherRect.width &&
+            height == otherRect.height;
+    }
 
     @Override
     public String toString() { return "(" + x + "," + y + "," + width + "," + height + ")"; }

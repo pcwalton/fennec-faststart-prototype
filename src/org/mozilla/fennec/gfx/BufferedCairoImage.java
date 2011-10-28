@@ -37,24 +37,37 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.CairoImage;
+import org.mozilla.fennec.gfx.CairoUtils;
+import android.graphics.Bitmap;
 import java.nio.ByteBuffer;
 
-/*
- * A bitmap with pixel data in one of the formats that Cairo understands.
- */
-public abstract class CairoImage {
-    public abstract ByteBuffer lockBuffer();
-    public void unlockBuffer() { /* By default, a no-op. */ }
+/** A Cairo image that simply saves a buffer of pixel data. */
+public class BufferedCairoImage extends CairoImage {
+    private ByteBuffer mBuffer;
+    private int mWidth, mHeight, mFormat;
 
-    public abstract int getWidth();
-    public abstract int getHeight();
-    public abstract int getFormat();
+    /** Creates a buffered Cairo image from a byte buffer. */
+    public BufferedCairoImage(ByteBuffer inBuffer, int inWidth, int inHeight, int inFormat) {
+        mBuffer = inBuffer; mWidth = inWidth; mHeight = inHeight; mFormat = inFormat;
+    }
 
-    public static final int FORMAT_INVALID = -1;
-    public static final int FORMAT_ARGB32 = 0;
-    public static final int FORMAT_RGB24 = 1;
-    public static final int FORMAT_A8 = 2;
-    public static final int FORMAT_A1 = 3;
-    public static final int FORMAT_RGB16_565 = 4;
+    /** Creates a buffered Cairo image from an Android bitmap. */
+    public BufferedCairoImage(Bitmap bitmap) {
+        mFormat = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
+        mWidth = bitmap.getWidth();
+        mHeight = bitmap.getHeight();
+        mBuffer = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
+        bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
+    }
+
+    @Override
+    public ByteBuffer lockBuffer() { return mBuffer; }
+    @Override
+    public int getWidth() { return mWidth; }
+    @Override
+    public int getHeight() { return mHeight; }
+    @Override
+    public int getFormat() { return mFormat; }
 }
 

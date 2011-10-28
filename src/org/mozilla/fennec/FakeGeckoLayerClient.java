@@ -37,6 +37,7 @@
 
 package org.mozilla.fennec;
 
+import org.mozilla.fennec.gfx.BufferedCairoImage;
 import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
@@ -55,11 +56,11 @@ import java.nio.ByteBuffer;
 public class FakeGeckoLayerClient extends LayerClient {
     private Bitmap mBitmap;
     private ByteBuffer mBuffer;
-    private AsyncTask<Object,Object,CairoImage> mRenderTask;
+    private AsyncTask<Object,Object,BufferedCairoImage> mRenderTask;
     private SingleTileLayer mTileLayer;
     private ViewportController mViewportController;
 
-    private static final int PAGE_WIDTH = 1500;
+    private static final int PAGE_WIDTH = 980;
     private static final int PAGE_HEIGHT = 2500;
 
     public FakeGeckoLayerClient() {
@@ -90,10 +91,10 @@ public class FakeGeckoLayerClient extends LayerClient {
             mRenderTask = null;
         }
 
-        mRenderTask = new AsyncTask<Object,Object,CairoImage>() {
+        mRenderTask = new AsyncTask<Object,Object,BufferedCairoImage>() {
             private IntRect mViewportRect;
 
-            protected CairoImage doInBackground(Object... args) {
+            protected BufferedCairoImage doInBackground(Object... args) {
                 mViewportRect = mViewportController.clampRect(getTransformedVisibleRect());
                 float zoomFactor = getZoomFactor();
 
@@ -116,21 +117,21 @@ public class FakeGeckoLayerClient extends LayerClient {
                 }
 
                 mBitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
-                return new CairoImage(mBuffer, LayerController.TILE_SIZE,
-                                      LayerController.TILE_SIZE, CairoImage.FORMAT_RGB16_565);
+                return new BufferedCairoImage(mBuffer, LayerController.TILE_SIZE,
+                                              LayerController.TILE_SIZE,
+                                              CairoImage.FORMAT_RGB16_565);
             }
 
-            protected void onPostExecute(CairoImage image) {
+            protected void onPostExecute(BufferedCairoImage image) {
                 LayerController controller = getLayerController();
                 controller.unzoom();
                 controller.notifyViewOfGeometryChange();
 
                 mViewportController.setVisibleRect(mViewportRect);
 
-                IntRect viewportRect = mViewportController.clampVisibleRect();
-                IntRect layerRect =
-                    mViewportController.untransformVisibleRect(viewportRect,
-                                                               controller.getPageSize());
+                IntRect viewportRect = mViewportController.clampRect(mViewportRect);
+                IntRect layerRect = mViewportController.untransformVisibleRect(viewportRect,
+                                                                               getPageSize());
                 mTileLayer.origin = layerRect.getOrigin();
                 mTileLayer.paintImage(image);
             }

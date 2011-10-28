@@ -37,6 +37,7 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.BufferedCairoImage;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
@@ -72,11 +73,11 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
         /* FIXME: Layers should not be directly connected to the layer controller. */
         LayerController controller = view.getController();
         mBackgroundLayer = new SingleTileLayer();
-        mBackgroundLayer.paintImage(new CairoImage(controller.getBackgroundPattern()));
+        mBackgroundLayer.paintImage(new BufferedCairoImage(controller.getBackgroundPattern()));
         mCheckerboardLayer = new SingleTileLayer(true);
-        mCheckerboardLayer.paintImage(new CairoImage(controller.getCheckerboardPattern()));
+        mCheckerboardLayer.paintImage(new BufferedCairoImage(controller.getCheckerboardPattern()));
         mShadowLayer = new NinePatchTileLayer(controller);
-        mShadowLayer.paintImage(new CairoImage(controller.getShadowPattern()));
+        mShadowLayer.paintImage(new BufferedCairoImage(controller.getShadowPattern()));
 
         mFrameCountTimestamp = System.currentTimeMillis();
         mFrameCount = 0;
