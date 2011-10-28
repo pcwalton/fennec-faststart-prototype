@@ -79,6 +79,7 @@ public class PanZoomController {
     private Axis mX, mY;
     private float mInitialZoomSpan;     // The span at the first zoom event.
     private IntRect mInitialZoomRect;
+    private boolean mZooming;
 
     public PanZoomController(LayerController controller) {
         mController = controller;
@@ -89,14 +90,10 @@ public class PanZoomController {
 
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
-        case MotionEvent.ACTION_DOWN:
-            return (event.getPointerCount() == 1) ? onTouchStart(event) : false;
-        case MotionEvent.ACTION_MOVE:
-            return (event.getPointerCount() == 1) ? onTouchMove(event) : false;
-        case MotionEvent.ACTION_UP:
-            return (event.getPointerCount() == 1) ? onTouchEnd(event) : false;
-        default:
-            return false;
+        case MotionEvent.ACTION_DOWN:   return onTouchStart(event);
+        case MotionEvent.ACTION_MOVE:   return onTouchMove(event);
+        case MotionEvent.ACTION_UP:     return onTouchEnd(event);
+        default:                        return false;
         }
     }
 
@@ -109,6 +106,15 @@ public class PanZoomController {
      */
 
     private boolean onTouchStart(MotionEvent event) {
+        /* If there is more than one finger down, we bail out to avoid misinterpreting a zoom
+         * gesture as a pan gesture. */
+        if (event.getPointerCount() > 1 || mZooming) {
+            mZooming = true;
+            mTouchMoved = false;
+            mStopped = true;
+            return false;
+        }
+
         mX.touchPos = event.getX(0); mY.touchPos = event.getY(0);
         mTouchMoved = mStopped = false;
         // TODO: Hold timeout
@@ -116,6 +122,13 @@ public class PanZoomController {
     }
 
     private boolean onTouchMove(MotionEvent event) {
+        if (event.getPointerCount() > 1 || mZooming) {
+            mZooming = true;
+            mTouchMoved = false;
+            mStopped = true;
+            return false;
+        }
+
         if (!mTouchMoved)
             mLastTimestamp = System.currentTimeMillis();
         mTouchMoved = true;
@@ -132,6 +145,9 @@ public class PanZoomController {
     }
 
     private boolean onTouchEnd(MotionEvent event) {
+        if (mZooming)
+            mZooming = false;
+
         fling(System.currentTimeMillis());
         return true;
     }

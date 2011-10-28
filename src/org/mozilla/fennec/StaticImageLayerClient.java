@@ -37,7 +37,7 @@
 
 package org.mozilla.fennec;
 
-import org.mozilla.fennec.gfx.CairoImage;
+import org.mozilla.fennec.gfx.BufferedCairoImage;
 import org.mozilla.fennec.gfx.CairoUtils;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
@@ -82,7 +82,7 @@ public class StaticImageLayerClient extends LayerClient {
     public void init() {
         SingleTileLayer tileLayer = new SingleTileLayer();
         getLayerController().setRoot(tileLayer);
-        tileLayer.paintImage(new CairoImage(mBuffer, mWidth, mHeight, mFormat));
+        tileLayer.paintImage(new BufferedCairoImage(mBuffer, mWidth, mHeight, mFormat));
     }
 
     @Override
