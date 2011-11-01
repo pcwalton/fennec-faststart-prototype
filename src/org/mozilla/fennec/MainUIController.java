@@ -38,10 +38,11 @@
 package org.mozilla.fennec;
 
 import org.mozilla.fennec.FakeGeckoLayerClient;
-import org.mozilla.fennec.StaticImageLayerClient;
 import org.mozilla.fennec.gfx.GeckoView;
 import org.mozilla.fennec.gfx.IntSize;
+import org.mozilla.fennec.gfx.LayerClient;
 import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.fennec.gfx.PlaceholderLayerClient;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -59,7 +60,8 @@ import android.widget.LinearLayout;
 
 public class MainUIController {
     private Activity mActivity;
-    private FakeGeckoLayerClient mGeckoLayerClient;
+    private LayerClient mLayerClient;
+    private LayerController mLayerController;
     private View outerView;
 
     public MainUIController(Activity activity) {
@@ -73,18 +75,14 @@ public class MainUIController {
     private void build() {
         mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        AwesomeBarController awesomeBarController =
-            new AwesomeBarController(this);
+        AwesomeBarController awesomeBarController = new AwesomeBarController(this);
 
-        /*StaticImageLayerClient staticImageLayerClient = new StaticImageLayerClient(mActivity);
-        LayerController layerController = new LayerController(mActivity, staticImageLayerClient);
-        staticImageLayerClient.init();*/
+        PlaceholderLayerClient layerClient = PlaceholderLayerClient.createInstance(mActivity);
+        mLayerController = new LayerController(mActivity, layerClient);
+        if (layerClient != null)
+            layerClient.init();
 
-        mGeckoLayerClient = new FakeGeckoLayerClient();
-        LayerController layerController = new LayerController(mActivity, mGeckoLayerClient);
-        mGeckoLayerClient.init();
-
-        View contentView = layerController.getView();
+        View contentView = mLayerController.getView();
         LinearLayout.LayoutParams contentViewLayout =
             new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                                           ViewGroup.LayoutParams.FILL_PARENT);
@@ -104,6 +102,16 @@ public class MainUIController {
     public void start() { /* TODO */ }
 
     public void createMenu(Menu menu) {
+        menu.add("Load Mock Gecko").setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                FakeGeckoLayerClient geckoLayerClient = new FakeGeckoLayerClient();
+                mLayerController.setLayerClient(geckoLayerClient);
+                geckoLayerClient.init();
+                return true;
+            }
+        });
+
         menu.add("Set Page Size").setOnMenuItemClickListener(new OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -118,7 +126,7 @@ public class MainUIController {
                             String[] strings = editText.getText().toString().split("\\s+");
                             IntSize newSize = new IntSize(Integer.parseInt(strings[0]),
                                                           Integer.parseInt(strings[1]));
-                            mGeckoLayerClient.setPageSize(newSize);
+                            mLayerClient.setPageSize(newSize);
                         }
                     })
                     .show();

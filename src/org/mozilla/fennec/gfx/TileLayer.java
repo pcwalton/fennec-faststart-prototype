@@ -40,6 +40,7 @@ package org.mozilla.fennec.gfx;
 import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
+import org.mozilla.fennec.gfx.TextureReaper;
 import javax.microedition.khronos.opengles.GL10;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -65,6 +66,12 @@ public abstract class TileLayer extends Layer {
 
     protected boolean repeats() { return mRepeat; }
     protected int getTextureID() { return mTextureIDs[0]; }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (mTextureIDs != null)
+            TextureReaper.get().add(mTextureIDs);
+    }
 
     /**
      * Subclasses implement this method to perform tile drawing.

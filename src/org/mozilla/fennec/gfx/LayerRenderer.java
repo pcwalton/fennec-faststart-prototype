@@ -44,6 +44,7 @@ import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.gfx.LayerView;
 import org.mozilla.fennec.gfx.NinePatchTileLayer;
 import org.mozilla.fennec.gfx.SingleTileLayer;
+import org.mozilla.fennec.gfx.TextureReaper;
 import org.mozilla.fennec.gfx.TileLayer;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -94,6 +95,7 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
     public void onDrawFrame(GL10 gl) {
         checkFPS();
+        TextureReaper.get().reap(gl);
 
         LayerController controller = mView.getController();
 
@@ -101,9 +103,6 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
         /* FIXME: Is this clear needed? */
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-        Layer rootLayer = controller.getRoot();
-        if (rootLayer == null)
-            return;
 
         /* Draw the background. */
         gl.glLoadIdentity();
@@ -125,7 +124,10 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
         /* Draw the layer the client added to us. */
         setupPageTransform(gl);
-        rootLayer.draw(gl);
+
+        Layer rootLayer = controller.getRoot();
+        if (rootLayer != null)
+            rootLayer.draw(gl);
 
         gl.glDisable(GL10.GL_SCISSOR_TEST);
     }

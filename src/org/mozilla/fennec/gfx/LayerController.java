@@ -88,18 +88,25 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         mOnGeometryChangeListeners = new ArrayList<OnGeometryChangeListener>();
         mOnPageSizeChangeListeners = new ArrayList<OnPageSizeChangeListener>();
 
-        mLayerClient = layerClient;
         mVisibleRect = new IntRect(0, 0, 1, 1);     /* Gets filled in when the surface changes. */
         mScreenSize = new IntSize(1, 1);
-        mPageSize = layerClient.getPageSize();
-        layerClient.setLayerController(this);
+
+        if (layerClient != null)
+            setLayerClient(layerClient);
+        else
+            mPageSize = new IntSize(LayerController.TILE_SIZE, LayerController.TILE_SIZE);
 
         mView = new LayerView(context, this);
         mPanZoomController = new PanZoomController(this);
     }
 
     public void setRoot(Layer layer) { mRootLayer = layer; }
-    public void setLayerClient(LayerClient layerClient) { mLayerClient = layerClient; }
+
+    public void setLayerClient(LayerClient layerClient) {
+        mLayerClient = layerClient;
+        mPageSize = layerClient.getPageSize();
+        layerClient.setLayerController(this);
+    }
 
     public Layer getRoot()          { return mRootLayer; }
     public LayerView getView()      { return mView; }
@@ -186,7 +193,8 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
      * the geometry changed.
      */
     public void notifyLayerClientOfGeometryChange() {
-        mLayerClient.geometryChanged();
+        if (mLayerClient != null)
+            mLayerClient.geometryChanged();
     }
 
     // Informs the view and the panning and zooming controller that the geometry changed.

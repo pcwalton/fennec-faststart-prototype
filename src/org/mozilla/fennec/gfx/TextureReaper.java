@@ -37,33 +37,35 @@
 
 package org.mozilla.fennec.gfx;
 
-import org.mozilla.fennec.gfx.IntRect;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerController;
+import javax.microedition.khronos.opengles.GL10;
+import java.util.ArrayList;
 
-/**
- * A layer client provides tiles and manages other information used by the layer controller.
- */
-public abstract class LayerClient {
-    private LayerController mLayerController;
-    protected float mZoomFactor;
+/** Manages a list of dead tiles, so we don't leak resources. */
+public class TextureReaper {
+    private static TextureReaper sSharedInstance;
+    private ArrayList<Integer> mDeadTextureIDs;
 
-    public abstract void geometryChanged();
-    public abstract IntSize getPageSize();
+    private TextureReaper() { mDeadTextureIDs = new ArrayList<Integer>(); }
 
-    /** Called whenever the page changes size. */
-    public abstract void setPageSize(IntSize pageSize);
-
-    public abstract void init();
-    protected abstract void render();
-
-    public LayerClient() {
-        mZoomFactor = 1.0f;
+    public static TextureReaper get() {
+        if (sSharedInstance == null)
+            sSharedInstance = new TextureReaper();
+        return sSharedInstance;
     }
 
-    public LayerController getLayerController() { return mLayerController; }
-    public void setLayerController(LayerController layerController) {
-        mLayerController = layerController;
+    public void add(int[] textureIDs) {
+        for (int textureID : textureIDs)
+            mDeadTextureIDs.add(textureID);
+    }
+
+    public void reap(GL10 gl) {
+        int[] deadTextureIDs = new int[mDeadTextureIDs.size()];
+        for (int i = 0; i < deadTextureIDs.length; i++)
+            deadTextureIDs[i] = mDeadTextureIDs.get(i);
+        mDeadTextureIDs.clear();
+
+        gl.glDeleteTextures(deadTextureIDs.length, deadTextureIDs, 0);
     }
 }
+
 

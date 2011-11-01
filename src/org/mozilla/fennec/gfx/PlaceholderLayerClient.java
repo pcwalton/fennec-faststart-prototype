@@ -35,50 +35,53 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec;
+package org.mozilla.fennec.gfx;
 
 import org.mozilla.fennec.gfx.BufferedCairoImage;
 import org.mozilla.fennec.gfx.CairoUtils;
-import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerClient;
-import org.mozilla.fennec.gfx.LayerController;
 import org.mozilla.fennec.gfx.SingleTileLayer;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.util.Log;
+import java.io.File;
 import java.nio.ByteBuffer;
 
-/*
- * A stand-in for Gecko that renders a static image (cached content of the previous page) using the
- * layer manager. We use this as a placeholder until Gecko is up.
+/**
+ * A stand-in for Gecko that renders cached content of the previous page. We use this until Gecko
+ * is up, then we hand off control to it.
  */
-public class StaticImageLayerClient extends LayerClient {
+public class PlaceholderLayerClient extends LayerClient {
     private Context mContext;
+    private IntSize mPageSize;
     private int mWidth, mHeight, mFormat;
     private ByteBuffer mBuffer;
 
-    public StaticImageLayerClient(Context context) {
+    private PlaceholderLayerClient(Context context, Bitmap bitmap) {
         mContext = context;
-
-        Resources resources = context.getResources();
-        int resourceID = resources.getIdentifier("page", "drawable", mContext.getPackageName());
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), resourceID, options);
+        mPageSize = new IntSize(995, 1250); /* TODO */
 
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
         mFormat = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
         mBuffer = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
         bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
-
-        Log.e("Fennec", "Static image layer client uploaded");
     }
 
-    /* Call this only after this client is hooked up to the layer controller. */
+    public static PlaceholderLayerClient createInstance(Context context) {
+        File path = new File(Environment.getExternalStorageDirectory(), "lastScreen.png");
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        Bitmap bitmap = BitmapFactory.decodeFile("" + path, options);
+        if (bitmap == null)
+            return null;
+
+        return new PlaceholderLayerClient(context, bitmap);
+    }
+
     public void init() {
         SingleTileLayer tileLayer = new SingleTileLayer();
         getLayerController().setRoot(tileLayer);
@@ -88,8 +91,12 @@ public class StaticImageLayerClient extends LayerClient {
     @Override
     public void geometryChanged() { /* no-op */ }
     @Override
-    public IntSize getPageSize() { return new IntSize(995, 1250); }
+    public IntSize getPageSize() { return mPageSize; }
     @Override
     public void render() { /* no-op */ }
+
+    /** Called whenever the page changes size. */
+    @Override
+    public void setPageSize(IntSize pageSize) { mPageSize = pageSize; }
 }
 
