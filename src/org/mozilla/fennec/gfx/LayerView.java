@@ -37,11 +37,15 @@
 
 package org.mozilla.fennec.gfx;
 
+import org.mozilla.fennec.gfx.InputConnectionHandler;
 import org.mozilla.fennec.gfx.LayerController;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.ScaleGestureDetector;
 
 /**
@@ -53,6 +57,7 @@ import android.view.ScaleGestureDetector;
 public class LayerView extends GLSurfaceView {
     private Context mContext;
     private LayerController mController;
+    private InputConnectionHandler mInputConnectionHandler;
     private LayerRenderer mRenderer;
     private ScaleGestureDetector mScaleGestureDetector;
 
@@ -64,6 +69,10 @@ public class LayerView extends GLSurfaceView {
         mRenderer = new LayerRenderer(this);
         setRenderer(mRenderer);
         mScaleGestureDetector = new ScaleGestureDetector(context, controller);
+        mInputConnectionHandler = null;
+
+        setFocusable(true);
+        setFocusableInTouchMode(true);
     }
 
     @Override
@@ -79,6 +88,52 @@ public class LayerView extends GLSurfaceView {
     /** The LayerRenderer calls this to indicate that the window has changed size. */
     public void setScreenSize(int width, int height) {
         mController.setScreenSize(width, height);
+    }
+
+    public void setInputConnectionHandler(InputConnectionHandler handler) {
+        mInputConnectionHandler = handler;
+    }
+
+    @Override
+    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+        if (mInputConnectionHandler != null)
+            return mInputConnectionHandler.onCreateInputConnection(outAttrs);
+        return null;
+    }
+
+    @Override
+    public boolean onKeyPreIme(int keyCode, KeyEvent event) {
+        if (mInputConnectionHandler != null)
+            return mInputConnectionHandler.onKeyPreIme(keyCode, event);
+        return false;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (mInputConnectionHandler != null)
+            return mInputConnectionHandler.onKeyDown(keyCode, event);
+        return false;                
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        if (mInputConnectionHandler != null)
+            return mInputConnectionHandler.onKeyLongPress(keyCode, event);
+        return false;                
+    }
+
+    @Override
+    public boolean onKeyMultiple(int keyCode, int repeatCount, KeyEvent event) {
+        if (mInputConnectionHandler != null)
+            return mInputConnectionHandler.onKeyMultiple(keyCode, repeatCount, event);
+        return false;                
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (mInputConnectionHandler != null)
+            return mInputConnectionHandler.onKeyUp(keyCode, event);
+        return false;                
     }
 }
 
