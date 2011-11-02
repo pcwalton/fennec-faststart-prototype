@@ -102,8 +102,8 @@ public abstract class TileLayer extends Layer {
         mTextureUploadNeeded = true;
 
         /*
-         * Assert that the image has a power-of-two size. Phones tend not to support NPOT textures,
-         * and OpenGL ES doesn't seem to let us efficiently slice up a NPOT bitmap.
+         * Assert that the image has a power-of-two size. OpenGL ES < 2.0 doesn't support NPOT
+         * textures and OpenGL ES doesn't seem to let us efficiently slice up a NPOT bitmap.
          */
         int width = mImage.getWidth(), height = mImage.getHeight();
         assert (width & (width - 1)) == 0;

@@ -45,6 +45,7 @@ import org.mozilla.fennec.gfx.LayerView;
 import org.mozilla.fennec.gfx.NinePatchTileLayer;
 import org.mozilla.fennec.gfx.SingleTileLayer;
 import org.mozilla.fennec.gfx.TextureReaper;
+import org.mozilla.fennec.gfx.TextLayer;
 import org.mozilla.fennec.gfx.TileLayer;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -63,6 +64,7 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
     private SingleTileLayer mBackgroundLayer;
     private SingleTileLayer mCheckerboardLayer;
     private NinePatchTileLayer mShadowLayer;
+    private TextLayer mFPSLayer;
 
     // FPS display
     private long mFrameCountTimestamp;
@@ -79,6 +81,8 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
         mCheckerboardLayer.paintImage(new BufferedCairoImage(controller.getCheckerboardPattern()));
         mShadowLayer = new NinePatchTileLayer(controller);
         mShadowLayer.paintImage(new BufferedCairoImage(controller.getShadowPattern()));
+        mFPSLayer = new TextLayer(new IntSize(64, 32));
+        mFPSLayer.setText("-- FPS");
 
         mFrameCountTimestamp = System.currentTimeMillis();
         mFrameCount = 0;
@@ -130,6 +134,12 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
             rootLayer.draw(gl);
 
         gl.glDisable(GL10.GL_SCISSOR_TEST);
+
+        /* Draw the FPS. */
+        gl.glLoadIdentity();
+        gl.glEnable(GL10.GL_BLEND);
+        mFPSLayer.draw(gl);
+        gl.glDisable(GL10.GL_BLEND);
     }
 
     private void setupPageTransform(GL10 gl) {
@@ -179,9 +189,9 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
     }
 
     private void checkFPS() {
-        if (System.currentTimeMillis() >= mFrameCountTimestamp + 5000) {
+        if (System.currentTimeMillis() >= mFrameCountTimestamp + 1000) {
             mFrameCountTimestamp = System.currentTimeMillis();
-            Log.e("Fennec", "" + mFrameCount / 5 + " FPS");
+            mFPSLayer.setText(mFrameCount + " FPS");
             mFrameCount = 0;
         } else {
             mFrameCount++;
