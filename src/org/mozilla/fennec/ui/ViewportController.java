@@ -62,10 +62,10 @@ public class ViewportController {
     /** Returns the coordinates of a tile centered on the given rect. */
     public static IntRect widenRect(IntRect rect) {
         IntPoint center = rect.getCenter();
-        return new IntRect(center.x - LayerController.TILE_SIZE / 2,
-                           center.y - LayerController.TILE_SIZE / 2,
-                           LayerController.TILE_SIZE,
-                           LayerController.TILE_SIZE);
+        return new IntRect(center.x - LayerController.TILE_WIDTH / 2,
+                           center.y - LayerController.TILE_HEIGHT / 2,
+                           LayerController.TILE_WIDTH,
+                           LayerController.TILE_HEIGHT);
     }
 
     /**

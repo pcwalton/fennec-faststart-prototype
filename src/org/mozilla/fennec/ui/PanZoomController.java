@@ -79,11 +79,12 @@ public class PanZoomController {
     private Axis mX, mY;
     private float mInitialZoomSpan;     // The span at the first zoom event.
     private IntRect mInitialZoomRect;
-    private boolean mZooming;
+    private boolean mTracking, mZooming;
 
     public PanZoomController(LayerController controller) {
         mController = controller;
         mX = new Axis(); mY = new Axis();
+        mStopped = true;
 
         populatePositionAndLength();
     }
@@ -99,6 +100,16 @@ public class PanZoomController {
 
     public void geometryChanged() {
         populatePositionAndLength();
+    }
+
+    /**
+     * Returns true if this controller is fine with performing a redraw operation or false if the
+     * controller would prefer that this action didn't take place. This is used to optimize the
+     * sending of pan/zoom events; when this returns false, a performance-critical operation like
+     * a pan or a zoom is taking place.
+     */
+    public boolean getRedrawHint() {
+        return mStopped && !mTracking && !mZooming;
     }
 
     /*
@@ -117,6 +128,7 @@ public class PanZoomController {
 
         mX.touchPos = event.getX(0); mY.touchPos = event.getY(0);
         mTouchMoved = mStopped = false;
+        mTracking = true;
         // TODO: Hold timeout
         return true;
     }
@@ -148,6 +160,7 @@ public class PanZoomController {
         if (mZooming)
             mZooming = false;
 
+        mTracking = false;
         fling(System.currentTimeMillis());
         return true;
     }
@@ -245,6 +258,7 @@ public class PanZoomController {
         }
 
         private void stop() {
+            mStopped = true;
             if (mFlingTimer != null) {
                 mFlingTimer.cancel();
                 mFlingTimer = null;

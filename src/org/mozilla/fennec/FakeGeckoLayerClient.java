@@ -57,6 +57,7 @@ public class FakeGeckoLayerClient extends LayerClient {
     private Bitmap mBitmap;
     private ByteBuffer mBuffer;
     private AsyncTask<Object,Object,BufferedCairoImage> mRenderTask;
+    private boolean mRenderTaskQueued;
     private SingleTileLayer mTileLayer;
     private ViewportController mViewportController;
 
@@ -76,9 +77,9 @@ public class FakeGeckoLayerClient extends LayerClient {
         mTileLayer = new SingleTileLayer();
         getLayerController().setRoot(mTileLayer);
 
-        mBuffer = ByteBuffer.allocateDirect(LayerController.TILE_SIZE * LayerController.TILE_SIZE *
-                                            2);
-        mBitmap = Bitmap.createBitmap(LayerController.TILE_SIZE, LayerController.TILE_SIZE,
+        mBuffer = ByteBuffer.allocateDirect(LayerController.TILE_WIDTH *
+                                            LayerController.TILE_HEIGHT * 2);
+        mBitmap = Bitmap.createBitmap(LayerController.TILE_WIDTH, LayerController.TILE_HEIGHT,
                                       Bitmap.Config.RGB_565);
 
         render();
@@ -87,9 +88,17 @@ public class FakeGeckoLayerClient extends LayerClient {
     @Override
     protected void render() {
         if (mRenderTask != null) {
-            mRenderTask.cancel(true);
-            mRenderTask = null;
+            //mRenderTask.cancel(true);
+            //mRenderTask = null;
+            return;
         }
+
+        if (!getLayerController().getRedrawHint())
+            return;
+
+        Log.e("Fennec", "### Redrawing");
+
+        mViewportController.setVisibleRect(getTransformedVisibleRect());
 
         mRenderTask = new AsyncTask<Object,Object,BufferedCairoImage>() {
             private IntRect mViewportRect;
@@ -117,8 +126,9 @@ public class FakeGeckoLayerClient extends LayerClient {
                 }
 
                 mBitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
-                return new BufferedCairoImage(mBuffer, LayerController.TILE_SIZE,
-                                              LayerController.TILE_SIZE,
+                return new BufferedCairoImage(mBuffer,
+                                              LayerController.TILE_WIDTH,
+                                              LayerController.TILE_HEIGHT,
                                               CairoImage.FORMAT_RGB16_565);
             }
 
@@ -134,6 +144,12 @@ public class FakeGeckoLayerClient extends LayerClient {
                                                                                getPageSize());
                 mTileLayer.origin = layerRect.getOrigin();
                 mTileLayer.paintImage(image);
+
+                mRenderTask = null;
+                if (mRenderTaskQueued) {
+                    mRenderTaskQueued = false;
+                    render();
+                }
             }
         };
 
@@ -155,7 +171,6 @@ public class FakeGeckoLayerClient extends LayerClient {
 
     @Override
     public void geometryChanged() {
-        mViewportController.setVisibleRect(getTransformedVisibleRect());
         render();
     }
 

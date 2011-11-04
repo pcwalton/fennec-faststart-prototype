@@ -84,12 +84,12 @@ public class SingleTileLayer extends TileLayer {
         if (repeats()) {
             gl.glMatrixMode(GL10.GL_TEXTURE);
             gl.glPushMatrix();
-            gl.glScalef(LayerController.TILE_SIZE / size.width,
-                        LayerController.TILE_SIZE / size.height,
+            gl.glScalef(LayerController.TILE_WIDTH / size.width,
+                        LayerController.TILE_HEIGHT / size.height,
                         1.0f);
 
             gl.glMatrixMode(GL10.GL_MODELVIEW);
-            gl.glScalef(LayerController.TILE_SIZE, LayerController.TILE_SIZE, 1.0f);
+            gl.glScalef(LayerController.TILE_WIDTH, LayerController.TILE_HEIGHT, 1.0f);
         } else {
             gl.glScalef(size.width, size.height, 1.0f);
         }

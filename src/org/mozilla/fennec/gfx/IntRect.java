@@ -87,6 +87,13 @@ public class IntRect implements Cloneable {
                            (int)Math.round(width * factor),
                            (int)Math.round(height * factor));
     }
+
+    /** Returns true if and only if the given rectangle is fully enclosed within this one. */
+    public boolean contains(IntRect other) {
+        return x <= other.x && y <= other.y &&
+               getRight() >= other.getRight() &&
+               getBottom() >= other.getBottom();
+    }
 }
 
 

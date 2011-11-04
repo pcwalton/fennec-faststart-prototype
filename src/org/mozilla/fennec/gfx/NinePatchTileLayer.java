@@ -57,8 +57,6 @@ public class NinePatchTileLayer extends TileLayer {
     private static final int PATCH_SIZE = 16;
     private static final int TEXTURE_SIZE = 48;
 
-    private static final int TILE_SIZE = LayerController.TILE_SIZE;
-
     /*
      * We divide the nine-patch bitmap up into the "sides" and the "tops":
      *

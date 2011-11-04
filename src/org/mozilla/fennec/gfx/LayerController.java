@@ -53,7 +53,7 @@ import android.view.ScaleGestureDetector;
 import android.view.View.OnTouchListener;
 import java.util.ArrayList;
 
-/*
+/**
  * The layer controller manages a tile that represents the visible page. It does panning and
  * zooming natively by delegating to a panning/zooming controller. Touch events can be dispatched
  * to a higher-level view.
@@ -80,7 +80,9 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     private ArrayList<OnPageSizeChangeListener> mOnPageSizeChangeListeners;
     /* A list of listeners that will be notified whenever the page size changes. */
 
-    public static final int TILE_SIZE = 1024;
+    /* NB: These must be powers of two due to the OpenGL ES 1.x restriction on NPOT textures. */
+    public static final int TILE_WIDTH = 1024;
+    public static final int TILE_HEIGHT = 2048;
 
     public LayerController(Context context, LayerClient layerClient) {
         mContext = context;
@@ -94,7 +96,7 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         if (layerClient != null)
             setLayerClient(layerClient);
         else
-            mPageSize = new IntSize(LayerController.TILE_SIZE, LayerController.TILE_SIZE);
+            mPageSize = new IntSize(LayerController.TILE_WIDTH, LayerController.TILE_HEIGHT);
 
         mView = new LayerView(context, this);
         mPanZoomController = new PanZoomController(this);
@@ -201,6 +203,27 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public void notifyViewOfGeometryChange() {
         mView.geometryChanged();
         mPanZoomController.geometryChanged();
+    }
+
+    /**
+     * Returns true if this controller is fine with performing a redraw operation or false if it
+     * would prefer that the action didn't take place.
+     */
+    public boolean getRedrawHint() {
+        if (checkerboarding() || mPanZoomController.getRedrawHint()) {
+            Log.e("Fennec", "### checkerboarding? " + checkerboarding() + " pan/zoom? " +
+                  mPanZoomController.getRedrawHint());
+        }
+        return checkerboarding() || mPanZoomController.getRedrawHint();
+    }
+
+    private IntRect getTileRect() {
+        return new IntRect(mRootLayer.origin.x, mRootLayer.origin.y, TILE_WIDTH, TILE_HEIGHT);
+    }
+
+    // Returns true if a checkerboard is visible.
+    private boolean checkerboarding() {
+        return !getTileRect().contains(mVisibleRect);
     }
 
     /*

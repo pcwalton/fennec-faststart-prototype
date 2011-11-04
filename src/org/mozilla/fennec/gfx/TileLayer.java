@@ -41,7 +41,9 @@ import org.mozilla.fennec.gfx.CairoImage;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.Layer;
 import org.mozilla.fennec.gfx.TextureReaper;
+import android.util.Log;
 import javax.microedition.khronos.opengles.GL10;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -52,14 +54,17 @@ import java.nio.FloatBuffer;
  */
 public abstract class TileLayer extends Layer {
     private CairoImage mImage;
-    private boolean mRepeat, mTextureUploadNeeded;
+    private boolean mRepeat;
     private IntSize mSize;
     private int[] mTextureIDs;
+
+    private IntRect mTextureUploadRect;
+    /* The rect that needs to be uploaded to the texture. */
 
     public TileLayer(boolean repeat) {
         super();
         mRepeat = repeat;
-        mTextureUploadNeeded = false;
+        mTextureUploadRect = null;
     }
 
     public IntSize getSize() { return mSize; }
@@ -84,7 +89,7 @@ public abstract class TileLayer extends Layer {
     protected void onDraw(GL10 gl) {
         if (mImage == null)
             return;
-        if (mTextureUploadNeeded)
+        if (mTextureUploadRect != null)
             uploadTexture(gl);
 
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
@@ -97,9 +102,9 @@ public abstract class TileLayer extends Layer {
         gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
     }
 
-    public void paintImage(CairoImage image) {
+    public void paintSubimage(CairoImage image, IntRect rect) {
         mImage = image;
-        mTextureUploadNeeded = true;
+        mTextureUploadRect = rect;
 
         /*
          * Assert that the image has a power-of-two size. OpenGL ES < 2.0 doesn't support NPOT
@@ -110,8 +115,13 @@ public abstract class TileLayer extends Layer {
         assert (height & (height - 1)) == 0;
     }
 
+    public void paintImage(CairoImage image) {
+        paintSubimage(image, new IntRect(0, 0, image.getWidth(), image.getHeight()));
+    }
+
     private void uploadTexture(GL10 gl) {
-        if (mTextureIDs == null) {
+        boolean newTexture = mTextureIDs == null;
+        if (newTexture) {
             mTextureIDs = new int[1];
             gl.glGenTextures(mTextureIDs.length, mTextureIDs, 0);
         }
@@ -134,13 +144,31 @@ public abstract class TileLayer extends Layer {
 
         ByteBuffer buffer = mImage.lockBuffer();
         try {
-            gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mSize.width, mSize.height, 0,
-                            format, type, buffer);
+            Log.e("Fennec", "### Texture upload rect height is " + mTextureUploadRect.height);
+
+            if (newTexture) {
+                /* The texture is new; we have to upload the whole image. */
+                gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mSize.width, mSize.height, 0,
+                                format, type, buffer);
+            } else {
+                /*
+                 * The texture is already existing, so upload only the changed rect. We have to
+                 * widen to the full width of the texture because we can't count on the device
+                 * having support for GL_EXT_unpack_subimage, and going line-by-line is too slow.
+                 */
+                Buffer viewBuffer = buffer.slice();
+                int bpp = CairoUtils.bitsPerPixelForCairoFormat(cairoFormat) / 8;
+                viewBuffer.position(mTextureUploadRect.y * width * bpp);
+
+                gl.glTexSubImage2D(gl.GL_TEXTURE_2D,
+                                   0, 0, mTextureUploadRect.y, width, mTextureUploadRect.height,
+                                   format, type, viewBuffer);
+            }
         } finally {
             mImage.unlockBuffer();
         }
 
-        mTextureUploadNeeded = false;
+        mTextureUploadRect = null;
     }
 
     protected static FloatBuffer createBuffer(float[] values) {
