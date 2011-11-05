@@ -39,6 +39,7 @@ package org.mozilla.fennec;
 
 import org.mozilla.fennec.FakeGeckoLayerClient;
 import org.mozilla.fennec.gfx.GeckoView;
+import org.mozilla.fennec.gfx.IntPoint;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerClient;
 import org.mozilla.fennec.gfx.LayerController;
@@ -48,10 +49,13 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.EditText;
@@ -88,6 +92,19 @@ public class MainUIController {
                                           ViewGroup.LayoutParams.FILL_PARENT);
         contentViewLayout.weight = 1.0f;
         contentView.setLayoutParams(contentViewLayout);
+
+        mLayerController.setOnTouchListener(new OnTouchListener() {
+            public boolean onTouch(View view, MotionEvent event) {
+                IntPoint viewPoint = new IntPoint((int)Math.round(event.getX()),
+                                                  (int)Math.round(event.getY()));
+                if (viewPoint == null)
+                    return false;
+
+                IntPoint layerPoint = mLayerController.convertViewPointToLayerPoint(viewPoint);
+                Log.e("Fennec", "### Layer point: " + layerPoint);
+                return true;
+            }
+        });
 
         LinearLayout outerLayout = new LinearLayout(mActivity);
         outerLayout.setOrientation(LinearLayout.VERTICAL);
