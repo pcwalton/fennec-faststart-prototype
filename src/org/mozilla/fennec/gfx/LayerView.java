@@ -77,13 +77,18 @@ public class LayerView extends GLSurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean result = mScaleGestureDetector.onTouchEvent(event);
-        result = mController.onTouchEvent(event) || result;
-        return result;
+        mScaleGestureDetector.onTouchEvent(event);
+        if (mScaleGestureDetector.isInProgress())
+            return true;
+        return mController.onTouchEvent(event);
     }
 
     public LayerController getController() { return mController; }
     public void geometryChanged() { /* TODO: Schedule a redraw. */ }
+
+    public void notifyRendererOfPageSizeChange() {
+        mRenderer.pageSizeChanged();
+    }
 
     /** The LayerRenderer calls this to indicate that the window has changed size. */
     public void setScreenSize(int width, int height) {

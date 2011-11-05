@@ -37,6 +37,7 @@
 
 package org.mozilla.fennec.ui;
 
+import org.mozilla.fennec.gfx.IntPoint;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
@@ -77,8 +78,10 @@ public class PanZoomController {
     private long mLastTimestamp;
     private Timer mFlingTimer;
     private Axis mX, mY;
-    private float mInitialZoomSpan;     // The span at the first zoom event.
-    private IntRect mInitialZoomRect;
+    private float mInitialZoomSpan;
+    /* The span at the first zoom event (in unzoomed page coordinates). */
+    private IntPoint mInitialZoomFocus;
+    /* The zoom focus at the first zoom event (in unzoomed page coordinates). */
     private boolean mTracking, mZooming;
 
     public PanZoomController(LayerController controller) {
@@ -234,10 +237,11 @@ public class PanZoomController {
 
             // If both X and Y axes are overscrolled, we have to wait until both axes have stopped to
             // snap back to avoid a jarring effect.
-            boolean waitingToSnapX = mX.getFlingState() == Axis.FLING_STATE_WAITING_TO_SNAP;
-            boolean waitingToSnapY = mY.getFlingState() == Axis.FLING_STATE_WAITING_TO_SNAP;
-            if (mX.getOverscroll() != Axis.NO_OVERSCROLL &&
-                    mY.getOverscroll() != Axis.NO_OVERSCROLL) {
+            boolean waitingToSnapX = mX.getFlingState() == Axis.FlingStates.WAITING_TO_SNAP;
+            boolean waitingToSnapY = mY.getFlingState() == Axis.FlingStates.WAITING_TO_SNAP;
+            if ((mX.getOverscroll() == Axis.Overscroll.PLUS || mX.getOverscroll() == Axis.Overscroll.MINUS) &&
+                (mY.getOverscroll() == Axis.Overscroll.PLUS || mY.getOverscroll() == Axis.Overscroll.MINUS))
+            {
                 if (waitingToSnapX && waitingToSnapY) {
                     mX.startSnap(); mY.startSnap();
                 }
@@ -251,8 +255,8 @@ public class PanZoomController {
             mX.displace(); mY.displace();
             updatePosition();
 
-            if (mX.getFlingState() == Axis.FLING_STATE_STOPPED &&
-                    mY.getFlingState() == Axis.FLING_STATE_STOPPED) {
+            if (mX.getFlingState() == Axis.FlingStates.STOPPED &&
+                    mY.getFlingState() == Axis.FlingStates.STOPPED) {
                 stop();
             }
         }
@@ -272,22 +276,24 @@ public class PanZoomController {
 
     // Physics information for one axis (X or Y).
     private static class Axis {
-        public static final int FLING_STATE_STOPPED = 0;            // Stopped.
-        public static final int FLING_STATE_SCROLLING = 1;          // Scrolling.
-        public static final int FLING_STATE_WAITING_TO_SNAP = 2;    // Waiting to snap into place.
-        public static final int FLING_STATE_SNAPPING = 3;           // Snapping into place.
+        public enum FlingStates {
+            STOPPED,
+            SCROLLING,
+            WAITING_TO_SNAP,
+            SNAPPING,
+        }
 
-        public static final int OVERSCROLLED_MINUS = -1;
-        /* Overscrolled in the negative direction. */
-        public static final int NO_OVERSCROLL = 0;
-        /* Not overscrolled. */
-        public static final int OVERSCROLLED_PLUS = 1;
-        /* Overscrolled in the positive direction. */
+        public enum Overscroll {
+            NONE,
+            MINUS,      // Overscrolled in the negative direction
+            PLUS,       // Overscrolled in the positive direction
+            BOTH,       // Overscrolled in both directions (page is zoomed to smaller than screen)
+        }
 
         public float touchPos;                  /* Position of the last touch. */
         public float velocity;                  /* Velocity in this direction. */
 
-        private int mFlingState;                /* The fling state we're in on this axis. */
+        private FlingStates mFlingState;        /* The fling state we're in on this axis. */
         private EaseOutAnimation mSnapAnim;     /* The animation when the page is snapping back. */
 
         /* These three need to be kept in sync with the layer controller. */
@@ -296,7 +302,7 @@ public class PanZoomController {
         private int mScreenLength;
         private int mPageLength;
 
-        public int getFlingState() { return mFlingState; }
+        public FlingStates getFlingState() { return mFlingState; }
 
         public void setViewportLength(int viewportLength) { mViewportLength = viewportLength; }
         public void setScreenLength(int screenLength) { mScreenLength = screenLength; }
@@ -304,43 +310,48 @@ public class PanZoomController {
 
         private int getViewportEnd() { return viewportPos + mViewportLength; }
 
-        public int getOverscroll() {
-            if (viewportPos < 0)
-                return OVERSCROLLED_MINUS;
-            if (viewportPos > mPageLength - mViewportLength)
-                return OVERSCROLLED_PLUS;
-            return NO_OVERSCROLL;
+        public Overscroll getOverscroll() {
+            boolean minus = (viewportPos < 0);
+            boolean plus = (getViewportEnd() > mPageLength);
+            if (minus && plus)
+                return Overscroll.BOTH;
+            else if (minus)
+                return Overscroll.MINUS;
+            else if (plus)
+                return Overscroll.PLUS;
+            else
+                return Overscroll.NONE;
         }
 
         // Returns the amount that the page has been overscrolled. If the page hasn't been
         // overscrolled on this axis, returns 0.
         private int getExcess() {
             switch (getOverscroll()) {
-            case OVERSCROLLED_MINUS:    return -viewportPos;
-            case OVERSCROLLED_PLUS:     return getViewportEnd() - mPageLength;
-            default:                    return 0;
+            case MINUS:     return Math.min(-viewportPos, mPageLength - getViewportEnd());
+            case PLUS:      return Math.min(viewportPos, getViewportEnd() - mPageLength);
+            default:        return 0;
             }
         }
 
         // Applies resistance along the edges when tracking.
-        private void applyEdgeResistance() {
+        public void applyEdgeResistance() {
             int excess = getExcess();
             if (excess > 0)
                 velocity *= SNAP_LIMIT - (float)excess / mViewportLength;
         }
 
-        public void startFling() { mFlingState = FLING_STATE_SCROLLING; }
+        public void startFling() { mFlingState = FlingStates.SCROLLING; }
 
         // Advances a fling animation by one step.
         public void advanceFling() {
             switch (mFlingState) {
-            case FLING_STATE_SCROLLING:
+            case SCROLLING:
                 scroll();
                 return;
-            case FLING_STATE_WAITING_TO_SNAP:
+            case WAITING_TO_SNAP:
                 // We don't do anything until the controller switches us into the snapping state.
                 return;
-            case FLING_STATE_SNAPPING:
+            case SNAPPING:
                 snap();
                 return;
             }
@@ -349,41 +360,41 @@ public class PanZoomController {
         // Performs one frame of a scroll operation if applicable.
         private void scroll() {
             // If we aren't overscrolled, just apply friction.
-            int overscroll = getOverscroll();
-            if (overscroll == NO_OVERSCROLL) {
+            int excess = getExcess();
+            if (excess == 0) {
                 velocity *= FRICTION;
                 if (Math.abs(velocity) < 0.1f) {
                     velocity = 0.0f;
-                    mFlingState = FLING_STATE_STOPPED;
+                    mFlingState = FlingStates.STOPPED;
                 }
                 return;
             }
 
             // Otherwise, decrease the velocity linearly.
-            float elasticity = 1.0f - getExcess() / (mViewportLength * SNAP_LIMIT);
-            if (overscroll == OVERSCROLLED_MINUS)
+            float elasticity = 1.0f - excess / (mViewportLength * SNAP_LIMIT);
+            if (getOverscroll() == Overscroll.MINUS)
                 velocity = Math.min((velocity + OVERSCROLL_DECEL_RATE) * elasticity, 0.0f);
-            else
+            else // must be Overscroll.PLUS
                 velocity = Math.max((velocity - OVERSCROLL_DECEL_RATE) * elasticity, 0.0f);
 
             if (velocity == 0.0f)
-                mFlingState = FLING_STATE_WAITING_TO_SNAP;
+                mFlingState = FlingStates.WAITING_TO_SNAP;
         }
 
         // Starts a snap-into-place operation.
-        private void startSnap() {
+        public void startSnap() {
             switch (getOverscroll()) {
-            case OVERSCROLLED_MINUS:
-                mSnapAnim = new EaseOutAnimation(viewportPos, 0.0f);
+            case MINUS:
+                mSnapAnim = new EaseOutAnimation(viewportPos, viewportPos + getExcess());
                 break;
-            case OVERSCROLLED_PLUS:
-                mSnapAnim = new EaseOutAnimation(viewportPos, mPageLength - mViewportLength);
+            case PLUS:
+                mSnapAnim = new EaseOutAnimation(viewportPos, viewportPos - getExcess());
                 break;
             default:
                 throw new RuntimeException("Not overscrolled at startSnap()");
             }
 
-            mFlingState = FLING_STATE_SNAPPING;
+            mFlingState = FlingStates.SNAPPING;
         }
 
         // Performs one frame of a snap-into-place operation.
@@ -393,12 +404,12 @@ public class PanZoomController {
 
             if (mSnapAnim.getFinished()) {
                 mSnapAnim = null;
-                mFlingState = FLING_STATE_STOPPED;
+                mFlingState = FlingStates.STOPPED;
             }
         }
 
         // Performs displacement of the viewport position according to the current velocity.
-        private void displace() { viewportPos += velocity; }
+        public void displace() { viewportPos += velocity; }
     }
 
     private static class EaseOutAnimation {
@@ -464,15 +475,14 @@ public class PanZoomController {
     /*
      * Zooming
      */
-
-    // FIXME: This is ridiculously wrong.
     public boolean onScale(ScaleGestureDetector detector) {
-        IntSize screenSize = mController.getScreenSize();
-        float newFactor = detector.getCurrentSpan() / mInitialZoomSpan;
+        float newZoom = detector.getCurrentSpan() / mInitialZoomSpan;
 
-        float width = mInitialZoomRect.width / newFactor;
-        float height = mInitialZoomRect.height / newFactor;
-        float x = mInitialZoomRect.x, y = mInitialZoomRect.y;
+        IntSize screenSize = mController.getScreenSize();
+        float x = mInitialZoomFocus.x - (detector.getFocusX() / newZoom);
+        float y = mInitialZoomFocus.y - (detector.getFocusY() / newZoom);
+        float width = screenSize.width / newZoom;
+        float height = screenSize.height / newZoom;
         mController.setVisibleRect((int)Math.round(x), (int)Math.round(y),
                                    (int)Math.round(width), (int)Math.round(height));
         mController.notifyLayerClientOfGeometryChange();
@@ -480,8 +490,12 @@ public class PanZoomController {
     }
 
     public boolean onScaleBegin(ScaleGestureDetector detector) {
-        mInitialZoomSpan = detector.getCurrentSpan();
-        mInitialZoomRect = (IntRect)mController.getVisibleRect().clone();
+        IntRect initialZoomRect = (IntRect)mController.getVisibleRect().clone();
+        float initialZoom = mController.getZoomFactor();
+
+        mInitialZoomFocus = new IntPoint((int)Math.round(initialZoomRect.x + (detector.getFocusX() / initialZoom)),
+                                         (int)Math.round(initialZoomRect.y + (detector.getFocusY() / initialZoom)));
+        mInitialZoomSpan = detector.getCurrentSpan() / initialZoom;
         return true;
     }
 

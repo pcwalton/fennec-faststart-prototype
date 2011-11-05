@@ -61,7 +61,7 @@ public class FakeGeckoLayerClient extends LayerClient {
     private SingleTileLayer mTileLayer;
     private ViewportController mViewportController;
 
-    private static final int PAGE_WIDTH = 980;
+    private static final int PAGE_WIDTH = 2500;
     private static final int PAGE_HEIGHT = 2500;
 
     public FakeGeckoLayerClient() {
@@ -102,10 +102,19 @@ public class FakeGeckoLayerClient extends LayerClient {
 
         mRenderTask = new AsyncTask<Object,Object,BufferedCairoImage>() {
             private IntRect mViewportRect;
+            private IntRect mTileRect;
 
             protected BufferedCairoImage doInBackground(Object... args) {
-                mViewportRect = mViewportController.clampRect(getTransformedVisibleRect());
-                float zoomFactor = getZoomFactor();
+                LayerController layerController = getLayerController();
+                IntRect visibleRect = layerController.getVisibleRect();
+                mTileRect = mViewportController.widenRect(visibleRect);
+                mTileRect = mViewportController.clampRect(mTileRect);
+
+                IntSize pageSize = layerController.getPageSize();
+                mViewportRect = mViewportController.transformVisibleRect(mTileRect, pageSize);
+
+                //float zoomFactor = getZoomFactor();
+                float zoomFactor = 1.0f;
 
                 Canvas canvas = new Canvas(mBitmap);
                 canvas.drawRGB(255, 255, 255);
@@ -134,15 +143,12 @@ public class FakeGeckoLayerClient extends LayerClient {
 
             protected void onPostExecute(BufferedCairoImage image) {
                 LayerController controller = getLayerController();
-                controller.unzoom();
+                //controller.unzoom();
                 controller.notifyViewOfGeometryChange();
 
                 mViewportController.setVisibleRect(mViewportRect);
 
-                IntRect viewportRect = mViewportController.clampRect(mViewportRect);
-                IntRect layerRect = mViewportController.untransformVisibleRect(viewportRect,
-                                                                               getPageSize());
-                mTileLayer.origin = layerRect.getOrigin();
+                mTileLayer.origin = mTileRect.getOrigin();
                 mTileLayer.paintImage(image);
 
                 mRenderTask = null;
@@ -161,7 +167,6 @@ public class FakeGeckoLayerClient extends LayerClient {
     public void setPageSize(IntSize pageSize) {
         mViewportController.setPageSize(pageSize);
         getLayerController().setPageSize(pageSize);
-
     }
 
     @Override

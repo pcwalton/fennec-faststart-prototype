@@ -52,10 +52,16 @@ public class ViewportController {
         mVisibleRect = visibleRect;
     }
 
+    private int clamp(int min, int value, int max) {
+        if (max < min)
+            return min;
+        return (value < min) ? min : (value > max) ? max : value;
+    }
+
     /** Returns the given rect, clamped to the boundaries of a tile. */
     public IntRect clampRect(IntRect rect) {
-        int x = Math.max(0, Math.min(rect.x, mPageSize.width - rect.width));
-        int y = Math.max(0, Math.min(rect.y, mPageSize.height - rect.height));
+        int x = clamp(0, rect.x, mPageSize.width - LayerController.TILE_WIDTH);
+        int y = clamp(0, rect.y, mPageSize.height - LayerController.TILE_HEIGHT);
         return new IntRect(x, y, rect.width, rect.height);
     }
 
