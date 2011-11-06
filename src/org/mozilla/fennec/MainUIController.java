@@ -49,6 +49,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.os.Debug;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,6 +62,7 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import java.io.IOException;
 
 public class MainUIController {
     private Activity mActivity;
@@ -148,6 +150,18 @@ public class MainUIController {
                     })
                     .show();
 
+                return true;
+            }
+        });
+
+        menu.add("Dump Heap").setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                try {
+                    Debug.dumpHprofData("/sdcard/fennec.hprof");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 return true;
             }
         });
