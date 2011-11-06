@@ -80,6 +80,16 @@ public class IntRect implements Cloneable {
     public int getRight() { return x + width; }
     public int getBottom() { return y + height; }
 
+    /** Contracts a rectangle by the given number of pixels in each direction, from the center. */
+    public IntRect contract(int lessWidth, int lessHeight) {
+        float halfWidth = width / 2.0f - lessWidth, halfHeight = height / 2.0f - lessHeight;
+        IntPoint center = getCenter();
+        return new IntRect((int)Math.round((float)center.x - halfWidth),
+                           (int)Math.round((float)center.y - halfHeight),
+                           (int)Math.round(halfWidth * 2.0f),
+                           (int)Math.round(halfHeight * 2.0f));
+    }
+
     /** Scales all four dimensions of this rectangle by the given factor. */
     public IntRect scaleAll(float factor) {
         return new IntRect((int)Math.round(x * factor),

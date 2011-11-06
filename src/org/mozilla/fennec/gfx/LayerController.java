@@ -80,9 +80,14 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     private ArrayList<OnPageSizeChangeListener> mOnPageSizeChangeListeners;
     /* A list of listeners that will be notified whenever the page size changes. */
 
-    /* NB: These must be powers of two due to the OpenGL ES 1.x restriction on NPOT textures. */
     public static final int TILE_WIDTH = 1024;
     public static final int TILE_HEIGHT = 2048;
+    /* NB: These must be powers of two due to the OpenGL ES 1.x restriction on NPOT textures. */
+
+    private static final int DANGER_ZONE_X = 150;
+    private static final int DANGER_ZONE_Y = 300;
+    /* If the visible rect is within the danger zone (measured in pixels from each edge of a tile),
+     * we start aggressively redrawing to minimize checkerboarding. */
 
     public LayerController(Context context, LayerClient layerClient) {
         mContext = context;
@@ -211,21 +216,58 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
      * would prefer that the action didn't take place.
      */
     public boolean getRedrawHint() {
-        if (checkerboarding() || mPanZoomController.getRedrawHint()) {
-            Log.e("Fennec", "### checkerboarding? " + checkerboarding() + " pan/zoom? " +
-                  mPanZoomController.getRedrawHint());
+        boolean aboutToCheckerboard = aboutToCheckerboard();
+        boolean redrawHint = mPanZoomController.getRedrawHint();
+        if (aboutToCheckerboard || redrawHint) {
+            Log.e("Fennec", "### checkerboarding? " + aboutToCheckerboard + " pan/zoom? " +
+                  redrawHint);
         }
-        return checkerboarding() || mPanZoomController.getRedrawHint();
+        return aboutToCheckerboard || redrawHint;
     }
 
     private IntRect getTileRect() {
         return new IntRect(mRootLayer.origin.x, mRootLayer.origin.y, TILE_WIDTH, TILE_HEIGHT);
     }
 
-    // Returns true if a checkerboard is visible.
-    private boolean checkerboarding() {
+    // Returns true if a checkerboard is about to be visible.
+    private boolean aboutToCheckerboard() {
         IntRect pageRect = new IntRect(0, 0, mPageSize.width, mPageSize.height);
-        return !getTileRect().contains(mVisibleRect.intersect(pageRect));
+        IntRect adjustedPageRect = pageRect.contract(DANGER_ZONE_X, DANGER_ZONE_Y);
+        IntRect visiblePageRect = mVisibleRect.intersect(adjustedPageRect);
+        IntRect adjustedTileRect = getTileRect().contract(DANGER_ZONE_X, DANGER_ZONE_Y);
+        boolean checkerboardImminent = !adjustedTileRect.contains(visiblePageRect);
+        if (checkerboardImminent) {
+            Log.e("Fennec", "### visiblePageRect " + visiblePageRect + " adjustedTileRect " +
+                  adjustedTileRect);
+        }
+        return checkerboardImminent;
+    }
+
+    /** Returns the given rect, clamped to the boundaries of a tile. */
+    public IntRect clampRect(IntRect rect) {
+        int x = clamp(0, rect.x, mPageSize.width - LayerController.TILE_WIDTH);
+        int y = clamp(0, rect.y, mPageSize.height - LayerController.TILE_HEIGHT);
+        return new IntRect(x, y, rect.width, rect.height);
+    }
+
+    private int clamp(int min, int value, int max) {
+        if (max < min)
+            return min;
+        return (value < min) ? min : (value > max) ? max : value;
+    }
+
+    // Returns the coordinates of a tile, scaled by the given factor, centered on the given rect.
+    private static IntRect widenRect(IntRect rect, float scaleFactor) {
+        IntPoint center = rect.getCenter();
+        int halfTileWidth = (int)Math.round(TILE_WIDTH * scaleFactor / 2.0f);
+        int halfTileHeight = (int)Math.round(TILE_HEIGHT * scaleFactor / 2.0f);
+        return new IntRect(center.x - halfTileWidth, center.y - halfTileHeight,
+                           halfTileWidth, halfTileHeight);
+    }
+
+    /** Returns the coordinates of a tile centered on the given rect. */
+    public static IntRect widenRect(IntRect rect) {
+        return widenRect(rect, 1.0f);
     }
 
     /**

@@ -107,8 +107,8 @@ public class FakeGeckoLayerClient extends LayerClient {
             protected BufferedCairoImage doInBackground(Object... args) {
                 LayerController layerController = getLayerController();
                 IntRect visibleRect = layerController.getVisibleRect();
-                mTileRect = mViewportController.widenRect(visibleRect);
-                mTileRect = mViewportController.clampRect(mTileRect);
+                mTileRect = layerController.widenRect(visibleRect);
+                mTileRect = layerController.clampRect(mTileRect);
 
                 IntSize pageSize = layerController.getPageSize();
                 mViewportRect = mViewportController.transformVisibleRect(mTileRect, pageSize);
