@@ -302,21 +302,6 @@ public class LayerController {
         return result;
     }
 
-    @Override
-    public boolean onScale(ScaleGestureDetector detector) {
-        return mPanZoomController.onScale(detector);
-    }
-
-    @Override
-    public boolean onScaleBegin(ScaleGestureDetector detector) {
-        return mPanZoomController.onScaleBegin(detector);
-    }
-
-    @Override
-    public void onScaleEnd(ScaleGestureDetector detector) {
-        mPanZoomController.onScaleEnd(detector);
-    }
-
     /**
      * Objects that wish to listen for changes in the layer geometry (visible rect or screen size)
      * should implement this interface and register themselves with addOnGeometryChangeListener().
