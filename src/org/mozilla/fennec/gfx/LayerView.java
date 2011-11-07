@@ -59,6 +59,7 @@ public class LayerView extends GLSurfaceView {
     private LayerController mController;
     private InputConnectionHandler mInputConnectionHandler;
     private LayerRenderer mRenderer;
+    private GestureDetector mGestureDetector;
     private ScaleGestureDetector mScaleGestureDetector;
 
     public LayerView(Context context, LayerController controller) {
@@ -68,7 +69,8 @@ public class LayerView extends GLSurfaceView {
         mController = controller;
         mRenderer = new LayerRenderer(this);
         setRenderer(mRenderer);
-        mScaleGestureDetector = new ScaleGestureDetector(context, controller);
+        mGestureDetector = new GestureDetector(context, controller.getGestureListener());
+        mScaleGestureDetector = new ScaleGestureDetector(context, controller.getScaleGestureListener());
         mInputConnectionHandler = null;
 
         setFocusable(true);
@@ -77,6 +79,8 @@ public class LayerView extends GLSurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (mGestureDetector.onTouchEvent(event))
+            return true;
         mScaleGestureDetector.onTouchEvent(event);
         if (mScaleGestureDetector.isInProgress())
             return true;

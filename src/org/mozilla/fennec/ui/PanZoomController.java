@@ -37,11 +37,15 @@
 
 package org.mozilla.fennec.ui;
 
+import org.json.JSONObject;
 import org.mozilla.fennec.gfx.IntPoint;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoEvent;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import java.util.Timer;
@@ -53,7 +57,12 @@ import java.util.TimerTask;
  * Many ideas are from Joe Hewitt's Scrollability:
  *   https://github.com/joehewitt/scrollability/
  */
-public class PanZoomController {
+public class PanZoomController
+    extends GestureDetector.SimpleOnGestureListener
+    implements ScaleGestureDetector.OnScaleGestureListener
+{
+    private static final String LOG_NAME = "PanZoomController";
+
     private LayerController mController;
 
     private static final float FRICTION = 0.97f;
@@ -74,29 +83,39 @@ public class PanZoomController {
     // The surface is snapping back into place after overscrolling.
     private static final int FLING_STATE_SNAPPING = 1;
 
-    private boolean mTouchMoved, mStopped;
     private long mLastTimestamp;
     private Timer mFlingTimer;
     private Axis mX, mY;
-    private float mInitialZoomSpan;
     /* The span at the first zoom event (in unzoomed page coordinates). */
-    private IntPoint mInitialZoomFocus;
+    private float mInitialZoomSpan;
     /* The zoom focus at the first zoom event (in unzoomed page coordinates). */
-    private boolean mTracking, mZooming;
+    private IntPoint mInitialZoomFocus;
+
+    private enum PanZoomState {
+        NOTHING,        /* no touch-start events received */
+        FLING,          /* all touches removed, but we're still scrolling page */
+        TOUCHING,       /* one touch-start event received */
+        PANNING,        /* touch-start followed by move */
+        PANNING_HOLD,   /* in panning, but haven't moved. similar to TOUCHING but after starting a pan */
+        PINCHING,       /* nth touch-start, where n > 1. this mode allows pan and zoom */
+    }
+
+    private PanZoomState mState;
 
     public PanZoomController(LayerController controller) {
         mController = controller;
         mX = new Axis(); mY = new Axis();
-        mStopped = true;
+        mState = PanZoomState.NOTHING;
 
         populatePositionAndLength();
     }
 
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
+        switch (event.getActionMasked()) {
         case MotionEvent.ACTION_DOWN:   return onTouchStart(event);
         case MotionEvent.ACTION_MOVE:   return onTouchMove(event);
         case MotionEvent.ACTION_UP:     return onTouchEnd(event);
+        case MotionEvent.ACTION_CANCEL: return onTouchCancel(event);
         default:                        return false;
         }
     }
@@ -112,7 +131,18 @@ public class PanZoomController {
      * a pan or a zoom is taking place.
      */
     public boolean getRedrawHint() {
-        return mStopped && !mTracking && !mZooming;
+        switch (mState) {
+        case NOTHING:
+        case TOUCHING:
+        case PANNING_HOLD:
+            return true;
+        case FLING:
+        case PANNING:
+        case PINCHING:
+            return false;
+        }
+        Log.e(LOG_NAME, "Unhandled case " + mState + " in getRedrawHint");
+        return true;
     }
 
     /*
@@ -120,52 +150,92 @@ public class PanZoomController {
      */
 
     private boolean onTouchStart(MotionEvent event) {
-        /* If there is more than one finger down, we bail out to avoid misinterpreting a zoom
-         * gesture as a pan gesture. */
-        if (event.getPointerCount() > 1 || mZooming) {
-            mZooming = true;
-            mTouchMoved = false;
-            mStopped = true;
+        switch (mState) {
+        case FLING:
+            if (mFlingTimer != null) {
+                mFlingTimer.cancel();
+                mFlingTimer = null;
+            }
+            // fall through
+        case NOTHING:
+            mState = PanZoomState.TOUCHING;
+            mX.touchPos = event.getX(0);
+            mY.touchPos = event.getY(0);
+            return false;
+        case TOUCHING:
+        case PANNING:
+        case PANNING_HOLD:
+        case PINCHING:
+            mState = PanZoomState.PINCHING;
             return false;
         }
-
-        mX.touchPos = event.getX(0); mY.touchPos = event.getY(0);
-        mTouchMoved = mStopped = false;
-        mTracking = true;
-        // TODO: Hold timeout
-        return true;
+        Log.e(LOG_NAME, "Unhandled case " + mState + " in onTouchStart");
+        return false;
     }
 
     private boolean onTouchMove(MotionEvent event) {
-        if (event.getPointerCount() > 1 || mZooming) {
-            mZooming = true;
-            mTouchMoved = false;
-            mStopped = true;
+        switch (mState) {
+        case NOTHING:
+        case FLING:
+            // should never happen
+            Log.e(LOG_NAME, "Received impossible touch move while in " + mState);
+            return false;
+        case TOUCHING:
+            mLastTimestamp = System.currentTimeMillis();
+            // fall through
+        case PANNING_HOLD:
+            mState = PanZoomState.PANNING;
+            // fall through
+        case PANNING:
+            track(event, System.currentTimeMillis());
+            return true;
+        case PINCHING:
+            // scale gesture listener will handle this
             return false;
         }
-
-        if (!mTouchMoved)
-            mLastTimestamp = System.currentTimeMillis();
-        mTouchMoved = true;
-
-        // TODO: Clear hold timeout
-        track(event, System.currentTimeMillis());
-
-        if (mFlingTimer != null) {
-            mFlingTimer.cancel();
-            mFlingTimer = null;
-        }
-
-        return true;
+        Log.e(LOG_NAME, "Unhandled case " + mState + " in onTouchMove");
+        return false;
     }
 
     private boolean onTouchEnd(MotionEvent event) {
-        if (mZooming)
-            mZooming = false;
+        switch (mState) {
+        case NOTHING:
+        case FLING:
+            // should never happen
+            Log.e(LOG_NAME, "Received impossible touch end while in " + mState);
+            return false;
+        case TOUCHING:
+            mState = PanZoomState.NOTHING;
+            // TODO: send click to gecko
+            return false;
+        case PANNING:
+        case PANNING_HOLD:
+            mState = PanZoomState.FLING;
+            fling(System.currentTimeMillis());
+            return true;
+        case PINCHING:
+            int points = event.getPointerCount();
+            if (points == 1) {
+                // last touch up
+                mState = PanZoomState.NOTHING;
+            } else if (points == 2) {
+                int pointRemovedIndex = event.getActionIndex();
+                int pointRemainingIndex = 1 - pointRemovedIndex; // kind of a hack
+                mState = PanZoomState.TOUCHING;
+                mX.touchPos = event.getX(pointRemainingIndex);
+                mY.touchPos = event.getY(pointRemainingIndex);
+            } else {
+                // still pinching, do nothing
+            }
+            return true;
+        }
+        Log.e(LOG_NAME, "Unhandled case " + mState + " in onTouchEnd");
+        return false;
+    }
 
-        mTracking = false;
-        fling(System.currentTimeMillis());
-        return true;
+    private boolean onTouchCancel(MotionEvent event) {
+        mState = PanZoomState.NOTHING;
+        return false;
     }
 
     private void track(MotionEvent event, long timestamp) {
@@ -179,7 +249,8 @@ public class PanZoomController {
 
         float absVelocity = (float)Math.sqrt(mX.velocity * mX.velocity +
                                              mY.velocity * mY.velocity);
-        mStopped = absVelocity < STOPPED_THRESHOLD;
+        if (absVelocity < STOPPED_THRESHOLD)
+            mState = PanZoomState.PANNING_HOLD;
 
         mX.applyEdgeResistance(); mX.displace();
         mY.applyEdgeResistance(); mY.displace();
@@ -190,7 +261,7 @@ public class PanZoomController {
         long timeStep = timestamp - mLastTimestamp;
         mLastTimestamp = timestamp;
 
-        if (mStopped)
+        if (mState != PanZoomState.FLING)
             mX.velocity = mY.velocity = 0.0f;
 
         mX.displace(); mY.displace();
@@ -264,7 +335,7 @@ public class PanZoomController {
         }
 
         private void stop() {
-            mStopped = true;
+            mState = PanZoomState.NOTHING;
             if (mFlingTimer != null) {
                 mFlingTimer.cancel();
                 mFlingTimer = null;
@@ -379,8 +450,10 @@ public class PanZoomController {
             else // must be Overscroll.PLUS
                 velocity = Math.max((velocity - OVERSCROLL_DECEL_RATE) * elasticity, 0.0f);
 
-            if (velocity == 0.0f)
+            if (Math.abs(velocity) < 0.3f) {
+                velocity = 0.0f;
                 mFlingState = FlingStates.WAITING_TO_SNAP;
+            }
         }
 
         // Starts a snap-into-place operation.
@@ -477,7 +550,9 @@ public class PanZoomController {
     /*
      * Zooming
      */
+    @Override
     public boolean onScale(ScaleGestureDetector detector) {
+        mState = PanZoomState.PINCHING;
         float newZoom = detector.getCurrentSpan() / mInitialZoomSpan;
 
         IntSize screenSize = mController.getScreenSize();
@@ -488,10 +563,13 @@ public class PanZoomController {
         mController.setVisibleRect((int)Math.round(x), (int)Math.round(y),
                                    (int)Math.round(width), (int)Math.round(height));
         mController.notifyLayerClientOfGeometryChange();
+        populatePositionAndLength();
         return true;
     }
 
+    @Override
     public boolean onScaleBegin(ScaleGestureDetector detector) {
+        mState = PanZoomState.PINCHING;
         IntRect initialZoomRect = (IntRect)mController.getVisibleRect().clone();
         float initialZoom = mController.getZoomFactor();
 
@@ -501,8 +579,29 @@ public class PanZoomController {
         return true;
     }
 
+    @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
-        // TODO
+        mState = PanZoomState.PANNING_HOLD;
+        mLastTimestamp = System.currentTimeMillis();
+        mX.touchPos = detector.getFocusX();
+        mY.touchPos = detector.getFocusY();
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent) {
+        JSONObject ret = new JSONObject();
+        try {
+            IntPoint point = new IntPoint((int)Math.round(motionEvent.getX()),
+                                          (int)Math.round(motionEvent.getY()));
+            point = mController.convertViewPointToLayerPoint(point);
+            ret.put("x", point.x);
+            ret.put("y", point.y);
+            Log.e(LOG_NAME, "Long press at " + motionEvent.getX() + ", " + motionEvent.getY());
+        } catch(Exception ex) {
+            Log.w(LOG_NAME, "Error building return: " + ex);
+        }
+
+        GeckoEvent e = new GeckoEvent("Gesture:LongPress", ret.toString());
+        GeckoAppShell.sendEventToGecko(e);
     }
 }
-

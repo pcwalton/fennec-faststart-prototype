@@ -49,6 +49,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.GestureDetector;
 import android.view.ScaleGestureDetector;
 import android.view.View.OnTouchListener;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ import java.util.ArrayList;
  * zooming natively by delegating to a panning/zooming controller. Touch events can be dispatched
  * to a higher-level view.
  */
-public class LayerController implements ScaleGestureDetector.OnScaleGestureListener {
+public class LayerController {
     private Layer mRootLayer;                   /* The root layer. */
     private LayerView mView;                    /* The main rendering view. */
     private Context mContext;                   /* The current context. */
@@ -103,8 +104,8 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
         else
             mPageSize = new IntSize(LayerController.TILE_WIDTH, LayerController.TILE_HEIGHT);
 
-        mView = new LayerView(context, this);
         mPanZoomController = new PanZoomController(this);
+        mView = new LayerView(context, this);
     }
 
     public void setRoot(Layer layer) { mRootLayer = layer; }
@@ -125,6 +126,9 @@ public class LayerController implements ScaleGestureDetector.OnScaleGestureListe
     public Bitmap getBackgroundPattern()    { return getDrawable("pattern"); }
     public Bitmap getCheckerboardPattern()  { return getDrawable("checkerboard"); }
     public Bitmap getShadowPattern()        { return getDrawable("shadow"); }
+
+    public GestureDetector.OnGestureListener getGestureListener()                   { return mPanZoomController; }
+    public ScaleGestureDetector.OnScaleGestureListener getScaleGestureListener()    { return mPanZoomController; }
 
     private Bitmap getDrawable(String name) {
         Resources resources = mContext.getResources();

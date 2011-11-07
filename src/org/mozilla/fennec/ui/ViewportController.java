@@ -52,6 +52,28 @@ public class ViewportController {
         mVisibleRect = visibleRect;
     }
 
+    private int clamp(int min, int value, int max) {
+        if (max < min)
+            return min;
+        return (value < min) ? min : (value > max) ? max : value;
+    }
+
+    /** Returns the given rect, clamped to the boundaries of a tile. */
+    public IntRect clampRect(IntRect rect) {
+        int x = clamp(0, rect.x, mPageSize.width - LayerController.TILE_WIDTH);
+        int y = clamp(0, rect.y, mPageSize.height - LayerController.TILE_HEIGHT);
+        return new IntRect(x, y, rect.width, rect.height);
+    }
+
+    /** Returns the coordinates of a tile centered on the given rect. */
+    public static IntRect widenRect(IntRect rect) {
+        IntPoint center = rect.getCenter();
+        return new IntRect(center.x - LayerController.TILE_WIDTH / 2,
+                           center.y - LayerController.TILE_HEIGHT / 2,
+                           LayerController.TILE_WIDTH,
+                           LayerController.TILE_HEIGHT);
+    }
+
     /**
      * Given the layer controller's visible rect, page size, and screen size, returns the zoom
      * factor.
