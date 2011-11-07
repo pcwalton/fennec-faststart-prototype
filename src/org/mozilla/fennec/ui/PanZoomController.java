@@ -42,8 +42,6 @@ import org.mozilla.fennec.gfx.IntPoint;
 import org.mozilla.fennec.gfx.IntRect;
 import org.mozilla.fennec.gfx.IntSize;
 import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -589,7 +587,7 @@ public class PanZoomController
 
     @Override
     public void onLongPress(MotionEvent motionEvent) {
-        JSONObject ret = new JSONObject();
+        /*JSONObject ret = new JSONObject();
         try {
             IntPoint point = new IntPoint((int)Math.round(motionEvent.getX()),
                                           (int)Math.round(motionEvent.getY()));
@@ -602,6 +600,6 @@ public class PanZoomController
         }
 
         GeckoEvent e = new GeckoEvent("Gesture:LongPress", ret.toString());
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.sendEventToGecko(e);*/
     }
 }
