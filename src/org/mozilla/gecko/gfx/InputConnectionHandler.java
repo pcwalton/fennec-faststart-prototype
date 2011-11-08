@@ -4,7 +4,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.KeyEvent;
 
-public interface InputConnectionHandler 
+public interface InputConnectionHandler
 {
     InputConnection onCreateInputConnection(EditorInfo outAttrs);
     boolean onKeyPreIme(int keyCode, KeyEvent event);

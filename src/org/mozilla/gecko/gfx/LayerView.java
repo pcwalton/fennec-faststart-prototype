@@ -121,28 +121,28 @@ public class LayerView extends GLSurfaceView {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (mInputConnectionHandler != null)
             return mInputConnectionHandler.onKeyDown(keyCode, event);
-        return false;                
+        return false;
     }
 
     @Override
     public boolean onKeyLongPress(int keyCode, KeyEvent event) {
         if (mInputConnectionHandler != null)
             return mInputConnectionHandler.onKeyLongPress(keyCode, event);
-        return false;                
+        return false;
     }
 
     @Override
     public boolean onKeyMultiple(int keyCode, int repeatCount, KeyEvent event) {
         if (mInputConnectionHandler != null)
             return mInputConnectionHandler.onKeyMultiple(keyCode, repeatCount, event);
-        return false;                
+        return false;
     }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (mInputConnectionHandler != null)
             return mInputConnectionHandler.onKeyUp(keyCode, event);
-        return false;                
+        return false;
     }
 }
 

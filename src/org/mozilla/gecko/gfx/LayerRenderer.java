@@ -160,7 +160,7 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
         LayerController controller = mView.getController();
         float zoomFactor = controller.getZoomFactor();
         IntRect visibleRect = controller.getVisibleRect();
-        IntSize pageSize = controller.getPageSize(); 
+        IntSize pageSize = controller.getPageSize();
 
         return new IntRect((int)Math.round(-zoomFactor * visibleRect.x),
                            (int)Math.round(-zoomFactor * visibleRect.y),

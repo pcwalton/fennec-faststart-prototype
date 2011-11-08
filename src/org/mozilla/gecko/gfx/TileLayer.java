@@ -180,7 +180,7 @@ public abstract class TileLayer extends Layer {
         floatBuffer.position(0);
         return floatBuffer;
     }
-    
+
     protected static void drawTriangles(GL10 gl, FloatBuffer vertexBuffer,
                                         FloatBuffer texCoordBuffer, int count) {
         gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
