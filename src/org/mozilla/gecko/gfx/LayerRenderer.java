@@ -103,8 +103,6 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
         LayerController controller = mView.getController();
 
-        //Log.e("Fennec", "visible rect: " + controller.getVisibleRect());
-
         /* FIXME: Is this clear needed? */
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 
@@ -160,7 +158,7 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
         LayerController controller = mView.getController();
         float zoomFactor = controller.getZoomFactor();
         IntRect visibleRect = controller.getVisibleRect();
-        IntSize pageSize = controller.getPageSize(); 
+        IntSize pageSize = controller.getPageSize();
 
         return new IntRect((int)Math.round(-zoomFactor * visibleRect.x),
                            (int)Math.round(-zoomFactor * visibleRect.y),

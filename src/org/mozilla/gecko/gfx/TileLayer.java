@@ -144,8 +144,6 @@ public abstract class TileLayer extends Layer {
 
         ByteBuffer buffer = mImage.lockBuffer();
         try {
-            Log.e("Fennec", "### Texture upload rect height is " + mTextureUploadRect.height);
-
             if (newTexture) {
                 /* The texture is new; we have to upload the whole image. */
                 gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, internalFormat, mSize.width, mSize.height, 0,
@@ -180,7 +178,7 @@ public abstract class TileLayer extends Layer {
         floatBuffer.position(0);
         return floatBuffer;
     }
-    
+
     protected static void drawTriangles(GL10 gl, FloatBuffer vertexBuffer,
                                         FloatBuffer texCoordBuffer, int count) {
         gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);

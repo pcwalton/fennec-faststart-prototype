@@ -251,7 +251,7 @@ public class LayerController {
         return (value < min) ? min : (value > max) ? max : value;
     }
 
-    // Returns the coordinates of a tile, scaled by the given factor, centered 
+    // Returns the coordinates of a tile, scaled by the given factor, centered on the given rect.
     private static IntRect widenRect(IntRect rect, float scaleFactor) {
         IntPoint center = rect.getCenter();
         int halfTileWidth = (int)Math.round(TILE_WIDTH * scaleFactor / 2.0f);
