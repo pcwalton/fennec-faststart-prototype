@@ -35,31 +35,37 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.IntPoint;
 import javax.microedition.khronos.opengles.GL10;
+import java.util.ArrayList;
 
-public abstract class Layer {
-    public IntPoint origin;
+/** Manages a list of dead tiles, so we don't leak resources. */
+public class TextureReaper {
+    private static TextureReaper sSharedInstance;
+    private ArrayList<Integer> mDeadTextureIDs;
 
-    public Layer() {
-        origin = new IntPoint(0, 0);
+    private TextureReaper() { mDeadTextureIDs = new ArrayList<Integer>(); }
+
+    public static TextureReaper get() {
+        if (sSharedInstance == null)
+            sSharedInstance = new TextureReaper();
+        return sSharedInstance;
     }
 
-    /** Draws the layer. Automatically applies the translation. */
-    public final void draw(GL10 gl) {
-        gl.glPushMatrix();
-        gl.glTranslatef(origin.x, origin.y, 0.0f);
-        onDraw(gl);
-        gl.glPopMatrix();
+    public void add(int[] textureIDs) {
+        for (int textureID : textureIDs)
+            mDeadTextureIDs.add(textureID);
     }
 
-    /**
-     * Subclasses implement this method to perform drawing.
-     *
-     * Invariant: The current matrix mode must be GL_MODELVIEW both before and after this call.
-     */
-    protected abstract void onDraw(GL10 gl);
+    public void reap(GL10 gl) {
+        int[] deadTextureIDs = new int[mDeadTextureIDs.size()];
+        for (int i = 0; i < deadTextureIDs.length; i++)
+            deadTextureIDs[i] = mDeadTextureIDs.get(i);
+        mDeadTextureIDs.clear();
+
+        gl.glDeleteTextures(deadTextureIDs.length, deadTextureIDs, 0);
+    }
 }
+
 

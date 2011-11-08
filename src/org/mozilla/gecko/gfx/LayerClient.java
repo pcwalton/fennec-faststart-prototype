@@ -35,39 +35,35 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec;
+package org.mozilla.gecko.gfx;
 
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
+import org.mozilla.gecko.gfx.IntRect;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerController;
 
-public class AwesomeBarController {
-    private MainUIController mainUIController;
-    private View awesomeBar;
+/**
+ * A layer client provides tiles and manages other information used by the layer controller.
+ */
+public abstract class LayerClient {
+    private LayerController mLayerController;
+    protected float mZoomFactor;
 
-    public AwesomeBarController(MainUIController inMainUIController) {
-        mainUIController = inMainUIController;
-        build();
+    public abstract void geometryChanged();
+    public abstract IntSize getPageSize();
+
+    /** Called whenever the page changes size. */
+    public abstract void setPageSize(IntSize pageSize);
+
+    public abstract void init();
+    protected abstract void render();
+
+    public LayerClient() {
+        mZoomFactor = 1.0f;
     }
 
-    /** Constructs the Awesome Bar widgets. */
-    private void build() {
-        LinearLayout layout = new LinearLayout(mainUIController.getContext());
-        layout.setOrientation(LinearLayout.HORIZONTAL);
-
-        EditText textBox = new EditText(mainUIController.getContext());
-        LinearLayout.LayoutParams textBoxLayoutParams =
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                                          ViewGroup.LayoutParams.WRAP_CONTENT);
-        textBoxLayoutParams.weight = 1.0f;
-        textBox.setLayoutParams(textBoxLayoutParams);
-        textBox.setImeOptions(0x2);  // "Go"
-        layout.addView(textBox);
-
-        awesomeBar = layout;
+    public LayerController getLayerController() { return mLayerController; }
+    public void setLayerController(LayerController layerController) {
+        mLayerController = layerController;
     }
-
-    public View getAwesomeBar() { return awesomeBar; }
 }
 

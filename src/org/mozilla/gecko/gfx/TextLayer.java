@@ -35,39 +35,65 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.CairoUtils;
+import org.mozilla.gecko.gfx.BufferedCairoImage;
+import org.mozilla.gecko.gfx.CairoImage;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.SingleTileLayer;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.util.Log;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 
-/** A Cairo image that simply saves a buffer of pixel data. */
-public class BufferedCairoImage extends CairoImage {
+/**
+ * Draws text on a layer. This is used for the frame rate meter.
+ */
+public class TextLayer extends SingleTileLayer {
     private ByteBuffer mBuffer;
-    private int mWidth, mHeight, mFormat;
+    private BufferedCairoImage mImage;
+    private IntSize mSize;
+    private String mText;
 
-    /** Creates a buffered Cairo image from a byte buffer. */
-    public BufferedCairoImage(ByteBuffer inBuffer, int inWidth, int inHeight, int inFormat) {
-        mBuffer = inBuffer; mWidth = inWidth; mHeight = inHeight; mFormat = inFormat;
+    public TextLayer(IntSize size) {
+        super(false);
+
+        mBuffer = ByteBuffer.allocateDirect(size.width * size.height * 4);
+        mSize = size;
+        mImage = new BufferedCairoImage(mBuffer, size.width, size.height,
+                                        CairoImage.FORMAT_ARGB32);
+        mText = "";
     }
 
-    /** Creates a buffered Cairo image from an Android bitmap. */
-    public BufferedCairoImage(Bitmap bitmap) {
-        mFormat = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
-        mWidth = bitmap.getWidth();
-        mHeight = bitmap.getHeight();
-        mBuffer = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
+    public void setText(String text) {
+        mText = text;
+        renderText();
+        paintImage(mImage);
+    }
+
+    private void renderText() {
+        Bitmap bitmap = Bitmap.createBitmap(mSize.width, mSize.height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint textPaint = new Paint();
+        textPaint.setAntiAlias(true);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setFakeBoldText(true);
+        textPaint.setTextSize(18.0f);
+        textPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        float width = textPaint.measureText(mText) + 18.0f;
+
+        Paint backgroundPaint = new Paint();
+        backgroundPaint.setColor(Color.argb(127, 0, 0, 0));
+        canvas.drawRect(0.0f, 0.0f, width, 18.0f + 6.0f, backgroundPaint);
+
+        canvas.drawText(mText, 6.0f, 18.0f, textPaint);
+
         bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
     }
-
-    @Override
-    public ByteBuffer lockBuffer() { return mBuffer; }
-    @Override
-    public int getWidth() { return mWidth; }
-    @Override
-    public int getHeight() { return mHeight; }
-    @Override
-    public int getFormat() { return mFormat; }
 }
 

@@ -35,14 +35,14 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.IntRect;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.Layer;
-import org.mozilla.fennec.gfx.LayerClient;
-import org.mozilla.fennec.gfx.LayerView;
-import org.mozilla.fennec.ui.PanZoomController;
+import org.mozilla.gecko.gfx.IntRect;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.gfx.LayerClient;
+import org.mozilla.gecko.gfx.LayerView;
+import org.mozilla.gecko.ui.PanZoomController;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -222,10 +222,6 @@ public class LayerController {
     public boolean getRedrawHint() {
         boolean aboutToCheckerboard = aboutToCheckerboard();
         boolean redrawHint = mPanZoomController.getRedrawHint();
-        if (aboutToCheckerboard || redrawHint) {
-            Log.e("Fennec", "### checkerboarding? " + aboutToCheckerboard + " pan/zoom? " +
-                  redrawHint);
-        }
         return aboutToCheckerboard || redrawHint;
     }
 
@@ -239,39 +235,7 @@ public class LayerController {
         IntRect adjustedPageRect = pageRect.contract(DANGER_ZONE_X, DANGER_ZONE_Y);
         IntRect visiblePageRect = mVisibleRect.intersect(adjustedPageRect);
         IntRect adjustedTileRect = getTileRect().contract(DANGER_ZONE_X, DANGER_ZONE_Y);
-        boolean checkerboardImminent = !adjustedTileRect.contains(visiblePageRect);
-        if (checkerboardImminent) {
-            Log.e("Fennec", "### visiblePageRect " + visiblePageRect + " adjustedTileRect " +
-                  adjustedTileRect);
-        }
-        return checkerboardImminent;
-    }
-
-    /** Returns the given rect, clamped to the boundaries of a tile. */
-    public IntRect clampRect(IntRect rect) {
-        int x = clamp(0, rect.x, mPageSize.width - LayerController.TILE_WIDTH);
-        int y = clamp(0, rect.y, mPageSize.height - LayerController.TILE_HEIGHT);
-        return new IntRect(x, y, rect.width, rect.height);
-    }
-
-    private int clamp(int min, int value, int max) {
-        if (max < min)
-            return min;
-        return (value < min) ? min : (value > max) ? max : value;
-    }
-
-    // Returns the coordinates of a tile, scaled by the given factor, centered on the given rect.
-    private static IntRect widenRect(IntRect rect, float scaleFactor) {
-        IntPoint center = rect.getCenter();
-        int halfTileWidth = (int)Math.round(TILE_WIDTH * scaleFactor / 2.0f);
-        int halfTileHeight = (int)Math.round(TILE_HEIGHT * scaleFactor / 2.0f);
-        return new IntRect(center.x - halfTileWidth, center.y - halfTileHeight,
-                           halfTileWidth, halfTileHeight);
-    }
-
-    /** Returns the coordinates of a tile centered on the given rect. */
-    public static IntRect widenRect(IntRect rect) {
-        return widenRect(rect, 1.0f);
+        return !adjustedTileRect.contains(visiblePageRect);
     }
 
     /**

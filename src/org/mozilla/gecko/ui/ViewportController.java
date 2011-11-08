@@ -35,12 +35,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.ui;
+package org.mozilla.gecko.ui;
 
-import org.mozilla.fennec.gfx.IntPoint;
-import org.mozilla.fennec.gfx.IntRect;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.gecko.gfx.IntPoint;
+import org.mozilla.gecko.gfx.IntRect;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerController;
 
 /** Manages the dimensions of the page viewport. */
 public class ViewportController {

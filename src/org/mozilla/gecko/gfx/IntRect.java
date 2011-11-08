@@ -35,9 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.IntPoint;
+import org.mozilla.gecko.gfx.IntPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
 

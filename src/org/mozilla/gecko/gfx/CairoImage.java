@@ -35,31 +35,26 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.nio.ByteBuffer;
 
-public class IntSize {
-    public final int width, height;
+/*
+ * A bitmap with pixel data in one of the formats that Cairo understands.
+ */
+public abstract class CairoImage {
+    public abstract ByteBuffer lockBuffer();
+    public void unlockBuffer() { /* By default, a no-op. */ }
 
-    public IntSize(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
+    public abstract int getWidth();
+    public abstract int getHeight();
+    public abstract int getFormat();
 
-    public IntSize(JSONObject json) {
-        try {
-            width = json.getInt("width");
-            height = json.getInt("height");
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public String toString() { return "(" + width + "," + height + ")"; }
-
-    public IntSize scale(float factor) {
-        return new IntSize((int)Math.round(width * factor),
-                           (int)Math.round(height * factor));
-    }
+    public static final int FORMAT_INVALID = -1;
+    public static final int FORMAT_ARGB32 = 0;
+    public static final int FORMAT_RGB24 = 1;
+    public static final int FORMAT_A8 = 2;
+    public static final int FORMAT_A1 = 3;
+    public static final int FORMAT_RGB16_565 = 4;
 }
 

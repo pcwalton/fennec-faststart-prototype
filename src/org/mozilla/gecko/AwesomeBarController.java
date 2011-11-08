@@ -35,37 +35,39 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko;
 
-import javax.microedition.khronos.opengles.GL10;
-import java.util.ArrayList;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
-/** Manages a list of dead tiles, so we don't leak resources. */
-public class TextureReaper {
-    private static TextureReaper sSharedInstance;
-    private ArrayList<Integer> mDeadTextureIDs;
+public class AwesomeBarController {
+    private MainUIController mainUIController;
+    private View awesomeBar;
 
-    private TextureReaper() { mDeadTextureIDs = new ArrayList<Integer>(); }
-
-    public static TextureReaper get() {
-        if (sSharedInstance == null)
-            sSharedInstance = new TextureReaper();
-        return sSharedInstance;
+    public AwesomeBarController(MainUIController inMainUIController) {
+        mainUIController = inMainUIController;
+        build();
     }
 
-    public void add(int[] textureIDs) {
-        for (int textureID : textureIDs)
-            mDeadTextureIDs.add(textureID);
+    /** Constructs the Awesome Bar widgets. */
+    private void build() {
+        LinearLayout layout = new LinearLayout(mainUIController.getContext());
+        layout.setOrientation(LinearLayout.HORIZONTAL);
+
+        EditText textBox = new EditText(mainUIController.getContext());
+        LinearLayout.LayoutParams textBoxLayoutParams =
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                                          ViewGroup.LayoutParams.WRAP_CONTENT);
+        textBoxLayoutParams.weight = 1.0f;
+        textBox.setLayoutParams(textBoxLayoutParams);
+        textBox.setImeOptions(0x2);  // "Go"
+        layout.addView(textBox);
+
+        awesomeBar = layout;
     }
 
-    public void reap(GL10 gl) {
-        int[] deadTextureIDs = new int[mDeadTextureIDs.size()];
-        for (int i = 0; i < deadTextureIDs.length; i++)
-            deadTextureIDs[i] = mDeadTextureIDs.get(i);
-        mDeadTextureIDs.clear();
-
-        gl.glDeleteTextures(deadTextureIDs.length, deadTextureIDs, 0);
-    }
+    public View getAwesomeBar() { return awesomeBar; }
 }
-
 

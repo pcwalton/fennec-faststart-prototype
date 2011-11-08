@@ -35,10 +35,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.InputConnectionHandler;
-import org.mozilla.fennec.gfx.LayerController;
+import org.mozilla.gecko.gfx.InputConnectionHandler;
+import org.mozilla.gecko.gfx.LayerController;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.view.GestureDetector;

@@ -35,11 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.gfx.TileLayer;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerController;
+import org.mozilla.gecko.gfx.TileLayer;
 import javax.microedition.khronos.opengles.GL10;
 import java.nio.FloatBuffer;
 
