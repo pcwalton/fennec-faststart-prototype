@@ -103,8 +103,6 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
         LayerController controller = mView.getController();
 
-        //Log.e("Fennec", "visible rect: " + controller.getVisibleRect());
-
         /* FIXME: Is this clear needed? */
         gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 

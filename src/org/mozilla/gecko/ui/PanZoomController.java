@@ -278,8 +278,6 @@ public class PanZoomController
     }
 
     private void updatePosition() {
-        Log.e("Fennec", "moving to " + mX.viewportPos + ", " + mY.viewportPos);
-
         mController.scrollTo(mX.viewportPos, mY.viewportPos);
         mController.notifyLayerClientOfGeometryChange();
     }
@@ -289,9 +287,6 @@ public class PanZoomController
         IntSize pageSize = mController.getPageSize();
         IntRect visibleRect = mController.getVisibleRect();
         IntSize screenSize = mController.getScreenSize();
-
-        Log.e("Fennec", "page size: " + pageSize + " visible rect: " + visibleRect +
-              "screen size: " + screenSize);
 
         mX.setPageLength(pageSize.width);
         mX.viewportPos = visibleRect.x;
@@ -596,7 +591,6 @@ public class PanZoomController
             point = mController.convertViewPointToLayerPoint(point);
             ret.put("x", point.x);
             ret.put("y", point.y);
-            Log.e(LOG_NAME, "Long press at " + motionEvent.getX() + ", " + motionEvent.getY());
         } catch(Exception ex) {
             Log.w(LOG_NAME, "Error building return: " + ex);
         }
