@@ -35,12 +35,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.Layer;
-import org.mozilla.fennec.gfx.TextureReaper;
+import org.mozilla.gecko.gfx.CairoImage;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.gfx.TextureReaper;
 import android.util.Log;
 import javax.microedition.khronos.opengles.GL10;
 import java.nio.Buffer;

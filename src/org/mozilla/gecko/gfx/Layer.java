@@ -35,26 +35,31 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-public class IntPoint {
-    public final int x, y;
+import org.mozilla.gecko.gfx.IntPoint;
+import javax.microedition.khronos.opengles.GL10;
 
-    public IntPoint(int inX, int inY) { x = inX; y = inY; }
+public abstract class Layer {
+    public IntPoint origin;
 
-    @Override
-    public String toString() { return "(" + x + ", " + y + ")"; }
-
-    /** Returns the result of adding the given point to this point. */
-    public IntPoint add(IntPoint other) { return new IntPoint(x + other.x, y + other.y); }
-
-    /** Returns the result of subtracting the given point from this point. */
-    public IntPoint subtract(IntPoint other) { return new IntPoint(x - other.x, y - other.y); }
-
-    /** Returns the result of multiplying both components by the given scalar. */
-    public IntPoint scale(float scale) {
-        return new IntPoint((int)Math.round((float)x * scale), (int)Math.round((float)y * scale));
+    public Layer() {
+        origin = new IntPoint(0, 0);
     }
-}
 
+    /** Draws the layer. Automatically applies the translation. */
+    public final void draw(GL10 gl) {
+        gl.glPushMatrix();
+        gl.glTranslatef(origin.x, origin.y, 0.0f);
+        onDraw(gl);
+        gl.glPopMatrix();
+    }
+
+    /**
+     * Subclasses implement this method to perform drawing.
+     *
+     * Invariant: The current matrix mode must be GL_MODELVIEW both before and after this call.
+     */
+    protected abstract void onDraw(GL10 gl);
+}
 

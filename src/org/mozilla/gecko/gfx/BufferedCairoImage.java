@@ -35,68 +35,39 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.BufferedCairoImage;
-import org.mozilla.fennec.gfx.CairoUtils;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerClient;
-import org.mozilla.fennec.gfx.SingleTileLayer;
-import android.content.Context;
+import org.mozilla.gecko.gfx.CairoImage;
+import org.mozilla.gecko.gfx.CairoUtils;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Environment;
-import android.util.Log;
-import java.io.File;
 import java.nio.ByteBuffer;
 
-/**
- * A stand-in for Gecko that renders cached content of the previous page. We use this until Gecko
- * is up, then we hand off control to it.
- */
-public class PlaceholderLayerClient extends LayerClient {
-    private Context mContext;
-    private IntSize mPageSize;
-    private int mWidth, mHeight, mFormat;
+/** A Cairo image that simply saves a buffer of pixel data. */
+public class BufferedCairoImage extends CairoImage {
     private ByteBuffer mBuffer;
+    private int mWidth, mHeight, mFormat;
 
-    private PlaceholderLayerClient(Context context, Bitmap bitmap) {
-        mContext = context;
-        mPageSize = new IntSize(995, 1250); /* TODO */
+    /** Creates a buffered Cairo image from a byte buffer. */
+    public BufferedCairoImage(ByteBuffer inBuffer, int inWidth, int inHeight, int inFormat) {
+        mBuffer = inBuffer; mWidth = inWidth; mHeight = inHeight; mFormat = inFormat;
+    }
 
+    /** Creates a buffered Cairo image from an Android bitmap. */
+    public BufferedCairoImage(Bitmap bitmap) {
+        mFormat = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
         mWidth = bitmap.getWidth();
         mHeight = bitmap.getHeight();
-        mFormat = CairoUtils.bitmapConfigToCairoFormat(bitmap.getConfig());
         mBuffer = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
         bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
     }
 
-    public static PlaceholderLayerClient createInstance(Context context) {
-        File path = new File(Environment.getExternalStorageDirectory(), "lastScreen.png");
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-        Bitmap bitmap = BitmapFactory.decodeFile("" + path, options);
-        if (bitmap == null)
-            return null;
-
-        return new PlaceholderLayerClient(context, bitmap);
-    }
-
-    public void init() {
-        SingleTileLayer tileLayer = new SingleTileLayer();
-        getLayerController().setRoot(tileLayer);
-        tileLayer.paintImage(new BufferedCairoImage(mBuffer, mWidth, mHeight, mFormat));
-    }
-
     @Override
-    public void geometryChanged() { /* no-op */ }
+    public ByteBuffer lockBuffer() { return mBuffer; }
     @Override
-    public IntSize getPageSize() { return mPageSize; }
+    public int getWidth() { return mWidth; }
     @Override
-    public void render() { /* no-op */ }
-
-    /** Called whenever the page changes size. */
+    public int getHeight() { return mHeight; }
     @Override
-    public void setPageSize(IntSize pageSize) { mPageSize = pageSize; }
+    public int getFormat() { return mFormat; }
 }
 

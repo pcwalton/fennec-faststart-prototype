@@ -35,65 +35,73 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.BufferedCairoImage;
-import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.SingleTileLayer;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
+import org.mozilla.gecko.gfx.CairoImage;
+import org.mozilla.gecko.gfx.CairoUtils;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerController;
+import org.mozilla.gecko.gfx.TileLayer;
 import android.util.Log;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Draws text on a layer. This is used for the frame rate meter.
+ * Encapsulates the logic needed to draw a single textured tile.
  */
-public class TextLayer extends SingleTileLayer {
-    private ByteBuffer mBuffer;
-    private BufferedCairoImage mImage;
-    private IntSize mSize;
-    private String mText;
+public class SingleTileLayer extends TileLayer {
+    private FloatBuffer mTexCoordBuffer, mVertexBuffer;
 
-    public TextLayer(IntSize size) {
-        super(false);
+    private static final float[] VERTICES = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f
+    };
 
-        mBuffer = ByteBuffer.allocateDirect(size.width * size.height * 4);
-        mSize = size;
-        mImage = new BufferedCairoImage(mBuffer, size.width, size.height,
-                                        CairoImage.FORMAT_ARGB32);
-        mText = "";
+    private static final float[] TEX_COORDS = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 1.0f
+    };
+
+    public SingleTileLayer() { this(false); }
+
+    public SingleTileLayer(boolean repeat) {
+        super(repeat);
+
+        mVertexBuffer = createBuffer(VERTICES);
+        mTexCoordBuffer = createBuffer(TEX_COORDS);
     }
 
-    public void setText(String text) {
-        mText = text;
-        renderText();
-        paintImage(mImage);
-    }
+    @Override
+    protected void onTileDraw(GL10 gl) {
+        IntSize size = getSize();
 
-    private void renderText() {
-        Bitmap bitmap = Bitmap.createBitmap(mSize.width, mSize.height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
+        if (repeats()) {
+            gl.glMatrixMode(GL10.GL_TEXTURE);
+            gl.glPushMatrix();
+            gl.glScalef(LayerController.TILE_WIDTH / size.width,
+                        LayerController.TILE_HEIGHT / size.height,
+                        1.0f);
 
-        Paint textPaint = new Paint();
-        textPaint.setAntiAlias(true);
-        textPaint.setColor(Color.WHITE);
-        textPaint.setFakeBoldText(true);
-        textPaint.setTextSize(18.0f);
-        textPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        float width = textPaint.measureText(mText) + 18.0f;
+            gl.glMatrixMode(GL10.GL_MODELVIEW);
+            gl.glScalef(LayerController.TILE_WIDTH, LayerController.TILE_HEIGHT, 1.0f);
+        } else {
+            gl.glScalef(size.width, size.height, 1.0f);
+        }
 
-        Paint backgroundPaint = new Paint();
-        backgroundPaint.setColor(Color.argb(127, 0, 0, 0));
-        canvas.drawRect(0.0f, 0.0f, width, 18.0f + 6.0f, backgroundPaint);
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, getTextureID());
+        drawTriangles(gl, mVertexBuffer, mTexCoordBuffer, 4);
 
-        canvas.drawText(mText, 6.0f, 18.0f, textPaint);
-
-        bitmap.copyPixelsToBuffer(mBuffer.asIntBuffer());
+        if (repeats()) {
+            gl.glMatrixMode(GL10.GL_TEXTURE);
+            gl.glPopMatrix();
+            gl.glMatrixMode(GL10.GL_MODELVIEW);
+        }
     }
 }
 

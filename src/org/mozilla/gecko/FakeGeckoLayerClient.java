@@ -35,16 +35,16 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec;
+package org.mozilla.gecko;
 
-import org.mozilla.fennec.gfx.BufferedCairoImage;
-import org.mozilla.fennec.gfx.CairoImage;
-import org.mozilla.fennec.gfx.IntRect;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerClient;
-import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.gfx.SingleTileLayer;
-import org.mozilla.fennec.ui.ViewportController;
+import org.mozilla.gecko.gfx.BufferedCairoImage;
+import org.mozilla.gecko.gfx.CairoImage;
+import org.mozilla.gecko.gfx.IntRect;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerClient;
+import org.mozilla.gecko.gfx.LayerController;
+import org.mozilla.gecko.gfx.SingleTileLayer;
+import org.mozilla.gecko.ui.ViewportController;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;

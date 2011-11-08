@@ -35,35 +35,26 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.IntRect;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerController;
+public class IntPoint {
+    public final int x, y;
 
-/**
- * A layer client provides tiles and manages other information used by the layer controller.
- */
-public abstract class LayerClient {
-    private LayerController mLayerController;
-    protected float mZoomFactor;
+    public IntPoint(int inX, int inY) { x = inX; y = inY; }
 
-    public abstract void geometryChanged();
-    public abstract IntSize getPageSize();
+    @Override
+    public String toString() { return "(" + x + ", " + y + ")"; }
 
-    /** Called whenever the page changes size. */
-    public abstract void setPageSize(IntSize pageSize);
+    /** Returns the result of adding the given point to this point. */
+    public IntPoint add(IntPoint other) { return new IntPoint(x + other.x, y + other.y); }
 
-    public abstract void init();
-    protected abstract void render();
+    /** Returns the result of subtracting the given point from this point. */
+    public IntPoint subtract(IntPoint other) { return new IntPoint(x - other.x, y - other.y); }
 
-    public LayerClient() {
-        mZoomFactor = 1.0f;
-    }
-
-    public LayerController getLayerController() { return mLayerController; }
-    public void setLayerController(LayerController layerController) {
-        mLayerController = layerController;
+    /** Returns the result of multiplying both components by the given scalar. */
+    public IntPoint scale(float scale) {
+        return new IntPoint((int)Math.round((float)x * scale), (int)Math.round((float)y * scale));
     }
 }
+
 

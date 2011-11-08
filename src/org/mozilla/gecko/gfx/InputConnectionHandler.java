@@ -1,4 +1,4 @@
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;

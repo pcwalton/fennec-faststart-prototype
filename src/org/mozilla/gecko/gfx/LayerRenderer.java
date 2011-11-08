@@ -35,18 +35,18 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.BufferedCairoImage;
-import org.mozilla.fennec.gfx.IntRect;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.gfx.LayerView;
-import org.mozilla.fennec.gfx.NinePatchTileLayer;
-import org.mozilla.fennec.gfx.SingleTileLayer;
-import org.mozilla.fennec.gfx.TextureReaper;
-import org.mozilla.fennec.gfx.TextLayer;
-import org.mozilla.fennec.gfx.TileLayer;
+import org.mozilla.gecko.gfx.BufferedCairoImage;
+import org.mozilla.gecko.gfx.IntRect;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerController;
+import org.mozilla.gecko.gfx.LayerView;
+import org.mozilla.gecko.gfx.NinePatchTileLayer;
+import org.mozilla.gecko.gfx.SingleTileLayer;
+import org.mozilla.gecko.gfx.TextureReaper;
+import org.mozilla.gecko.gfx.TextLayer;
+import org.mozilla.gecko.gfx.TileLayer;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.DisplayMetrics;

@@ -35,15 +35,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec;
+package org.mozilla.gecko;
 
-import org.mozilla.fennec.FakeGeckoLayerClient;
-import org.mozilla.fennec.gfx.GeckoView;
-import org.mozilla.fennec.gfx.IntPoint;
-import org.mozilla.fennec.gfx.IntSize;
-import org.mozilla.fennec.gfx.LayerClient;
-import org.mozilla.fennec.gfx.LayerController;
-import org.mozilla.fennec.gfx.PlaceholderLayerClient;
+import org.mozilla.gecko.FakeGeckoLayerClient;
+import org.mozilla.gecko.gfx.GeckoView;
+import org.mozilla.gecko.gfx.IntPoint;
+import org.mozilla.gecko.gfx.IntSize;
+import org.mozilla.gecko.gfx.LayerClient;
+import org.mozilla.gecko.gfx.LayerController;
+import org.mozilla.gecko.gfx.PlaceholderLayerClient;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;

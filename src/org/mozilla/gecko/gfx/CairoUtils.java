@@ -35,9 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.fennec.gfx;
+package org.mozilla.gecko.gfx;
 
-import org.mozilla.fennec.gfx.CairoImage;
+import org.mozilla.gecko.gfx.CairoImage;
 import android.graphics.Bitmap;
 import javax.microedition.khronos.opengles.GL10;
 
