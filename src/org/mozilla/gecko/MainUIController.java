@@ -38,7 +38,6 @@
 package org.mozilla.gecko;
 
 import org.mozilla.gecko.FakeGeckoLayerClient;
-import org.mozilla.gecko.gfx.GeckoView;
 import org.mozilla.gecko.gfx.IntPoint;
 import org.mozilla.gecko.gfx.IntSize;
 import org.mozilla.gecko.gfx.LayerClient;
