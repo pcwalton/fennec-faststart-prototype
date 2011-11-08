@@ -238,6 +238,33 @@ public class LayerController {
         return !adjustedTileRect.contains(visiblePageRect);
     }
 
+    /** Returns the given rect, clamped to the boundaries of a tile. */
+    public IntRect clampRect(IntRect rect) {
+        int x = clamp(0, rect.x, mPageSize.width - LayerController.TILE_WIDTH);
+        int y = clamp(0, rect.y, mPageSize.height - LayerController.TILE_HEIGHT);
+        return new IntRect(x, y, rect.width, rect.height);
+    }
+
+    private int clamp(int min, int value, int max) {
+        if (max < min)
+            return min;
+        return (value < min) ? min : (value > max) ? max : value;
+    }
+
+    // Returns the coordinates of a tile, scaled by the given factor, centered 
+    private static IntRect widenRect(IntRect rect, float scaleFactor) {
+        IntPoint center = rect.getCenter();
+        int halfTileWidth = (int)Math.round(TILE_WIDTH * scaleFactor / 2.0f);
+        int halfTileHeight = (int)Math.round(TILE_HEIGHT * scaleFactor / 2.0f);
+        return new IntRect(center.x - halfTileWidth, center.y - halfTileHeight,
+                           halfTileWidth, halfTileHeight);
+    }
+
+    /** Returns the coordinates of a tile centered on the given rect. */
+    public static IntRect widenRect(IntRect rect) {
+        return widenRect(rect, 1.0f);
+    }
+
     /**
      * Converts a point from layer view coordinates to layer coordinates. In other words, given a
      * point measured in pixels from the top left corner of the layer view, returns the point in
