@@ -39,6 +39,7 @@ package org.mozilla.gecko;
 
 import org.mozilla.gecko.gfx.BufferedCairoImage;
 import org.mozilla.gecko.gfx.CairoImage;
+import org.mozilla.gecko.gfx.FloatRect;
 import org.mozilla.gecko.gfx.IntRect;
 import org.mozilla.gecko.gfx.IntSize;
 import org.mozilla.gecko.gfx.LayerClient;
@@ -67,7 +68,7 @@ public class FakeGeckoLayerClient extends LayerClient {
     public FakeGeckoLayerClient() {
         super();
         mViewportController = new ViewportController(new IntSize(PAGE_WIDTH, PAGE_HEIGHT),
-                                                     new IntRect(0, 0, 1, 1));
+                                                     new FloatRect(0.0f, 0.0f, 1.0f, 1.0f));
     }
 
     @Override
@@ -101,12 +102,12 @@ public class FakeGeckoLayerClient extends LayerClient {
         mViewportController.setVisibleRect(getTransformedVisibleRect());
 
         mRenderTask = new AsyncTask<Object,Object,BufferedCairoImage>() {
-            private IntRect mViewportRect;
-            private IntRect mTileRect;
+            private FloatRect mViewportRect;
+            private FloatRect mTileRect;
 
             protected BufferedCairoImage doInBackground(Object... args) {
                 LayerController layerController = getLayerController();
-                IntRect visibleRect = layerController.getVisibleRect();
+                FloatRect visibleRect = layerController.getVisibleRect();
                 mTileRect = layerController.widenRect(visibleRect);
                 mTileRect = layerController.clampRect(mTileRect);
 
@@ -180,7 +181,7 @@ public class FakeGeckoLayerClient extends LayerClient {
     }
 
     /* Returns the dimensions of the box in page coordinates that the user is viewing. */
-    private IntRect getTransformedVisibleRect() {
+    private FloatRect getTransformedVisibleRect() {
         LayerController layerController = getLayerController();
         return mViewportController.transformVisibleRect(layerController.getVisibleRect(),
                                                         layerController.getPageSize());

@@ -37,14 +37,14 @@
 
 package org.mozilla.gecko.gfx;
 
-import org.mozilla.gecko.gfx.IntPoint;
+import org.mozilla.gecko.gfx.FloatPoint;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Layer {
-    public IntPoint origin;
+    public FloatPoint origin;
 
     public Layer() {
-        origin = new IntPoint(0, 0);
+        origin = new FloatPoint(0.0f, 0.0f);
     }
 
     /** Draws the layer. Automatically applies the translation. */

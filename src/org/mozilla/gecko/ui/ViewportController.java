@@ -37,6 +37,8 @@
 
 package org.mozilla.gecko.ui;
 
+import org.mozilla.gecko.gfx.FloatPoint;
+import org.mozilla.gecko.gfx.FloatRect;
 import org.mozilla.gecko.gfx.IntPoint;
 import org.mozilla.gecko.gfx.IntRect;
 import org.mozilla.gecko.gfx.IntSize;
@@ -45,9 +47,9 @@ import org.mozilla.gecko.gfx.LayerController;
 /** Manages the dimensions of the page viewport. */
 public class ViewportController {
     private IntSize mPageSize;
-    private IntRect mVisibleRect;
+    private FloatRect mVisibleRect;
 
-    public ViewportController(IntSize pageSize, IntRect visibleRect) {
+    public ViewportController(IntSize pageSize, FloatRect visibleRect) {
         mPageSize = pageSize;
         mVisibleRect = visibleRect;
     }
@@ -78,17 +80,17 @@ public class ViewportController {
      * Given the layer controller's visible rect, page size, and screen size, returns the zoom
      * factor.
      */
-    public float getZoomFactor(IntRect layerVisibleRect, IntSize layerPageSize,
+    public float getZoomFactor(FloatRect layerVisibleRect, IntSize layerPageSize,
                                IntSize screenSize) {
-        IntRect transformed = transformVisibleRect(layerVisibleRect, layerPageSize);
-        return (float)screenSize.width / (float)transformed.width;
+        FloatRect transformed = transformVisibleRect(layerVisibleRect, layerPageSize);
+        return (float)screenSize.width / transformed.width;
     }
 
     /**
      * Given the visible rectangle that the user is viewing and the layer controller's page size,
      * returns the dimensions of the box that this corresponds to on the page.
      */
-    public IntRect transformVisibleRect(IntRect layerVisibleRect, IntSize layerPageSize) {
+    public FloatRect transformVisibleRect(FloatRect layerVisibleRect, IntSize layerPageSize) {
         float zoomFactor = (float)layerPageSize.width / (float)mPageSize.width;
         return layerVisibleRect.scaleAll(1.0f / zoomFactor);
     }
@@ -97,14 +99,14 @@ public class ViewportController {
      * Given the visible rectangle that the user is viewing and the layer controller's page size,
      * returns the dimensions in layer coordinates that this corresponds to.
      */
-    public IntRect untransformVisibleRect(IntRect viewportVisibleRect, IntSize layerPageSize) {
+    public FloatRect untransformVisibleRect(FloatRect viewportVisibleRect, IntSize layerPageSize) {
         float zoomFactor = (float)layerPageSize.width / (float)mPageSize.width;
         return viewportVisibleRect.scaleAll(zoomFactor);
     }
 
     public IntSize getPageSize() { return mPageSize; }
     public void setPageSize(IntSize pageSize) { mPageSize = pageSize; }
-    public IntRect getVisibleRect() { return mVisibleRect; }
-    public void setVisibleRect(IntRect visibleRect) { mVisibleRect = visibleRect; }
+    public FloatRect getVisibleRect() { return mVisibleRect; }
+    public void setVisibleRect(FloatRect visibleRect) { mVisibleRect = visibleRect; }
 }
 

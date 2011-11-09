@@ -37,6 +37,7 @@
 
 package org.mozilla.gecko;
 
+import android.graphics.Canvas;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -64,6 +65,14 @@ public class AwesomeBarController {
         textBox.setLayoutParams(textBoxLayoutParams);
         textBox.setImeOptions(0x2);  // "Go"
         layout.addView(textBox);
+
+        /*View mockAwesomeBarView = new View() {
+            @Override
+            protected void onDraw(Canvas canvas) {
+            }
+        }
+
+        layout.addView(mockAwesomeBarView);*/
 
         awesomeBar = layout;
     }

@@ -37,58 +37,53 @@
 
 package org.mozilla.gecko.gfx;
 
-import org.mozilla.gecko.gfx.IntPoint;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mozilla.gecko.gfx.FloatPoint;
+import org.mozilla.gecko.gfx.IntRect;
 
-public class IntRect implements Cloneable {
-    public final int x, y, width, height;
+public class FloatRect {
+    public final float x, y, width, height;
 
-    public IntRect(int inX, int inY, int inWidth, int inHeight) {
+    public FloatRect(float inX, float inY, float inWidth, float inHeight) {
         x = inX; y = inY; width = inWidth; height = inHeight;
     }
 
-    public IntRect(JSONObject json) {
-        try {
-            x = json.getInt("x");
-            y = json.getInt("y");
-            width = json.getInt("width");
-            height = json.getInt("height");
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+    public FloatRect(IntRect intRect) {
+        x = intRect.x; y = intRect.y; width = intRect.width; height = intRect.height;
     }
 
-    @Override
-    public Object clone() { return new IntRect(x, y, width, height); }
+    public float getRight() { return x + width; }
+    public float getBottom() { return y + height; }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof IntRect))
-            return false;
-        IntRect otherRect = (IntRect)other;
-        return x == otherRect.x && y == otherRect.y && width == otherRect.width &&
-            height == otherRect.height;
+    public FloatPoint getOrigin() { return new FloatPoint(x, y); }
+    public FloatPoint getCenter() { return new FloatPoint(x + width / 2, y + height / 2); }
+
+    /** Returns the intersection of this rectangle with another rectangle. */
+    public FloatRect intersect(FloatRect other) {
+        float left = Math.max(x, other.x);
+        float top = Math.max(y, other.y);
+        float right = Math.min(getRight(), other.getRight());
+        float bottom = Math.min(getBottom(), other.getBottom());
+        return new FloatRect(left, top, Math.max(right - left, 0), Math.max(bottom - top, 0));
     }
 
-    @Override
-    public String toString() { return "(" + x + "," + y + "," + width + "," + height + ")"; }
-
-    public IntPoint getOrigin() { return new IntPoint(x, y); }
-    public IntPoint getCenter() { return new IntPoint(x + width / 2, y + height / 2); }
-
-    public int getRight() { return x + width; }
-    public int getBottom() { return y + height; }
+    /** Returns true if and only if the given rectangle is fully enclosed within this one. */
+    public boolean contains(FloatRect other) {
+        return x <= other.x && y <= other.y &&
+               getRight() >= other.getRight() &&
+               getBottom() >= other.getBottom();
+    }
 
     /** Contracts a rectangle by the given number of units in each direction, from the center. */
-    public IntRect contract(int lessWidth, int lessHeight) {
+    public FloatRect contract(float lessWidth, float lessHeight) {
         float halfWidth = width / 2.0f - lessWidth, halfHeight = height / 2.0f - lessHeight;
-        IntPoint center = getCenter();
-        return new IntRect((int)Math.round((float)center.x - halfWidth),
-                           (int)Math.round((float)center.y - halfHeight),
-                           (int)Math.round(halfWidth * 2.0f),
-                           (int)Math.round(halfHeight * 2.0f));
+        FloatPoint center = getCenter();
+        return new FloatRect(center.x - halfWidth, center.y - halfHeight,
+                             halfWidth * 2.0f, halfHeight * 2.0f);
+    }
+
+    /** Scales all four dimensions of this rectangle by the given factor. */
+    public FloatRect scaleAll(float factor) {
+        return new FloatRect(x * factor, y * factor, width * factor, height * factor);
     }
 }
-
 
