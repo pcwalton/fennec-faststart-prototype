@@ -38,6 +38,7 @@
 package org.mozilla.gecko.gfx;
 
 import org.mozilla.gecko.gfx.BufferedCairoImage;
+import org.mozilla.gecko.gfx.FloatRect;
 import org.mozilla.gecko.gfx.IntRect;
 import org.mozilla.gecko.gfx.IntSize;
 import org.mozilla.gecko.gfx.LayerController;
@@ -60,8 +61,11 @@ import java.nio.ByteBuffer;
  * The layer renderer implements the rendering logic for a layer view.
  */
 public class LayerRenderer implements GLSurfaceView.Renderer {
+    private static final float BACKGROUND_COLOR_R = 0.81f;
+    private static final float BACKGROUND_COLOR_G = 0.81f;
+    private static final float BACKGROUND_COLOR_B = 0.81f;
+
     private LayerView mView;
-    private SingleTileLayer mBackgroundLayer;
     private SingleTileLayer mCheckerboardLayer;
     private NinePatchTileLayer mShadowLayer;
     private TextLayer mFPSLayer;
@@ -75,8 +79,6 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
         /* FIXME: Layers should not be directly connected to the layer controller. */
         LayerController controller = view.getController();
-        mBackgroundLayer = new SingleTileLayer(true);
-        mBackgroundLayer.paintImage(new BufferedCairoImage(controller.getBackgroundPattern()));
         mCheckerboardLayer = new SingleTileLayer(true);
         mCheckerboardLayer.paintImage(new BufferedCairoImage(controller.getCheckerboardPattern()));
         mShadowLayer = new NinePatchTileLayer(controller);
@@ -103,12 +105,9 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
         LayerController controller = mView.getController();
 
-        /* FIXME: Is this clear needed? */
-        gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-
         /* Draw the background. */
-        gl.glLoadIdentity();
-        mBackgroundLayer.draw(gl);
+        gl.glClearColor(BACKGROUND_COLOR_R, BACKGROUND_COLOR_G, BACKGROUND_COLOR_B, 1.0f);
+        gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
         /* Draw the drop shadow. */
         setupPageTransform(gl);
@@ -146,7 +145,7 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
 
     private void setupPageTransform(GL10 gl) {
         LayerController controller = mView.getController();
-        IntRect visibleRect = controller.getVisibleRect();
+        FloatRect visibleRect = controller.getVisibleRect();
         float zoomFactor = controller.getZoomFactor();
 
         gl.glLoadIdentity();
@@ -157,7 +156,7 @@ public class LayerRenderer implements GLSurfaceView.Renderer {
     private IntRect getPageRect() {
         LayerController controller = mView.getController();
         float zoomFactor = controller.getZoomFactor();
-        IntRect visibleRect = controller.getVisibleRect();
+        FloatRect visibleRect = controller.getVisibleRect();
         IntSize pageSize = controller.getPageSize();
 
         return new IntRect((int)Math.round(-zoomFactor * visibleRect.x),

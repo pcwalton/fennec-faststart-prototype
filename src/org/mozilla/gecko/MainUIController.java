@@ -38,6 +38,7 @@
 package org.mozilla.gecko;
 
 import org.mozilla.gecko.FakeGeckoLayerClient;
+import org.mozilla.gecko.gfx.FloatPoint;
 import org.mozilla.gecko.gfx.IntPoint;
 import org.mozilla.gecko.gfx.IntSize;
 import org.mozilla.gecko.gfx.LayerClient;
@@ -78,7 +79,7 @@ public class MainUIController {
 
     /* Constructs the UI. */
     private void build() {
-        mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         AwesomeBarController awesomeBarController = new AwesomeBarController(this);
 
@@ -101,7 +102,7 @@ public class MainUIController {
                 if (viewPoint == null)
                     return false;
 
-                IntPoint layerPoint = mLayerController.convertViewPointToLayerPoint(viewPoint);
+                FloatPoint layerPoint = mLayerController.convertViewPointToLayerPoint(viewPoint);
                 Log.e("Fennec", "### Layer point: " + layerPoint);
                 return true;
             }
